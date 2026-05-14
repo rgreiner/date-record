@@ -309,6 +309,20 @@ export default function Profile() {
           ))}
         </div>
 
+        {/* Sair */}
+        <button
+          onClick={async () => {
+            const supabase = createClient()
+            await supabase.auth.signOut()
+            router.push('/')
+          }}
+          className="w-full py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-medium text-sm hover:border-red-300 hover:text-red-500 dark:hover:border-red-800 dark:hover:text-red-400 transition-colors"
+        >
+          Sair da conta
+        </button>
+
+        <div className="h-2" />
+
       </div>
     </main>
   )
