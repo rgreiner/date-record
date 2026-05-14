@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase'
 import PolaroidCard from '@/components/PolaroidCard'
 import AddCard from '@/components/AddCard'
 import { Toast } from '@/components/Toast'
+import { useDarkMode } from '@/hooks/useDarkMode'
 
 type DateRecord = {
   id: string
@@ -191,6 +192,7 @@ export default function Dashboard() {
 
   const [sortBy, setSortBy] = useState<'recent' | 'ranking' | 'status'>('recent')
   const [matchToast, setMatchToast] = useState('')
+  const { dark, toggle: toggleDark } = useDarkMode()
 
   const scoreMap = useMemo(() => new Map(records.map(r => [r.id, averageScore(r)])), [records])
   const partner = records.find(r => r.status === 'together') ?? null
@@ -248,6 +250,13 @@ export default function Dashboard() {
       <header className="flex items-center justify-between px-6 py-5 border-b border-amber-100 bg-[#faf6f0] dark:bg-gray-950 dark:border-gray-800">
         <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Date Record</h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleDark}
+            className="text-gray-400 hover:text-gray-600 text-lg transition-colors"
+            title={dark ? 'Modo claro' : 'Modo escuro'}
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
           <Link href="/insights" className="text-gray-400 hover:text-gray-600 text-sm transition-colors">
             📊
           </Link>

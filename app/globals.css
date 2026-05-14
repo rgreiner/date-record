@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6f0;
+  --foreground: #1f2937;
 }
 
 @theme inline {
@@ -13,15 +13,109 @@
   --font-caveat: var(--font-caveat);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ── Dark mode global ─────────────────────────────────── */
+.dark body,
+.dark main {
+  background-color: #030712;
+  color: #f9fafb;
+}
+
+.dark header {
+  background-color: #030712 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Páginas com fundo creme */
+.dark .bg-\[#faf6f0\] {
+  background-color: #030712 !important;
+}
+
+/* Cards brancos */
+.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+/* Fundo sutil */
+.dark .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: #1c1a0f !important;
+}
+
+.dark .bg-rose-50 {
+  background-color: #1c0f13 !important;
+}
+
+.dark .bg-green-50 {
+  background-color: #0f1c14 !important;
+}
+
+.dark .bg-red-50,
+.dark .bg-pink-50 {
+  background-color: #1c0f0f !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1f2937 !important;
+}
+
+/* Bordas */
+.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+.dark .border-gray-100 {
+  border-color: #1f2937 !important;
+}
+
+.dark .border-amber-100 {
+  border-color: #1f2937 !important;
+}
+
+/* Textos */
+.dark .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Inputs e textareas */
+.dark input:not([type="file"]),
+.dark textarea {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border-color: #374151 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Sombras ficam mais suaves no dark */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4) !important;
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6) !important;
+}
+
+/* Polaroids no dark — mantém branco para o efeito */
+.dark .bg-white.shadow-xl {
+  background-color: #1e2533 !important;
 }
