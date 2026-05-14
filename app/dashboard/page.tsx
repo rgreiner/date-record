@@ -179,7 +179,7 @@ export default function Dashboard() {
 
       const [{ data: profileData }, { data: datesData }] = await Promise.all([
         supabase.from('profiles').select('full_name, instagram_handle, avatar_url').eq('id', user.id).single(),
-        supabase.from('dates').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('dates').select('*').eq('user_id', user.id).order('position', { ascending: true }).order('created_at', { ascending: false }),
       ])
 
       setProfile(profileData ?? { full_name: user.user_metadata.full_name ?? 'Você', instagram_handle: null, avatar_url: null })
@@ -254,7 +254,7 @@ export default function Dashboard() {
       const order: Record<string, number> = { together: 0, matched: 1, dated: 2, interested: 3, not_interested: 4 }
       return [...records].sort((a, b) => order[a.status] - order[b.status])
     }
-    return records // já vem por created_at desc do banco
+    return records // já vem por position asc do banco
   }, [records, sortBy, scoreMap])
 
   const statusGroups = useMemo(() => {
