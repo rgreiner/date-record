@@ -58,7 +58,7 @@ export default function MagicLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] flex flex-col items-center justify-center p-8">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="font-caveat text-5xl text-gray-800 mb-1">Date Record</h1>

@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#faf6f0] flex flex-col items-center justify-center p-8 overflow-hidden">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex flex-col items-center justify-center p-8 overflow-hidden">
 
       {/* Polaroids decorativos ao fundo */}
       <div className="absolute inset-0 pointer-events-none select-none opacity-20">

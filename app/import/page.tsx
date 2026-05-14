@@ -94,7 +94,7 @@ export default function ImportPage() {
   const selectedCount = contacts.filter(c => c.selected).length
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] pb-12">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 pb-12">
       <div className="max-w-sm mx-auto px-6 pt-8 flex flex-col gap-6">
 
         {/* Header */}

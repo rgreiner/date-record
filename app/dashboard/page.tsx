@@ -307,7 +307,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
+      <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex items-center justify-center">
         <p className="font-caveat text-2xl text-gray-400">Carregando...</p>
       </main>
     )

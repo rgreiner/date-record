@@ -71,7 +71,7 @@ export default function AddDate() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] flex flex-col items-center justify-center p-8">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
 
         <div className="flex items-center gap-3 mb-8">
