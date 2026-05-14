@@ -8,6 +8,7 @@ type Invite = {
   id: string
   token: string
   sender_id: string
+  date_id: string
   response_score: number | null
   responded_at: string | null
   profiles: {
