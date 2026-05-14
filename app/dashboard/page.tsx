@@ -61,7 +61,7 @@ function TogetherCard({ partner, userPhoto, userName }: { partner: DateRecord; u
 
         {/* Dois polaroids lado a lado */}
         <div className="flex justify-center items-end gap-4">
-          <div className="bg-white shadow-xl p-2.5 pb-7 w-36 rotate-[-5deg] hover:rotate-[-3deg] transition-transform">
+          <div className="bg-white shadow-xl p-2.5 pb-7 w-[42%] rotate-[-5deg] hover:rotate-[-3deg] transition-transform">
             {userPhoto ? (
               <img src={userPhoto} alt={userName} className="w-full aspect-square object-cover" />
             ) : (
@@ -72,7 +72,7 @@ function TogetherCard({ partner, userPhoto, userName }: { partner: DateRecord; u
             <p className="font-caveat text-base text-gray-700 mt-2 truncate">{userName}</p>
           </div>
 
-          <div className="bg-white shadow-xl p-2.5 pb-7 w-36 rotate-[5deg] hover:rotate-[3deg] transition-transform">
+          <div className="bg-white shadow-xl p-2.5 pb-7 w-[42%] rotate-[5deg] hover:rotate-[3deg] transition-transform">
             {partner.photo_url ? (
               <img src={partner.photo_url} alt={partner.name} className="w-full aspect-square object-cover" />
             ) : (
@@ -355,7 +355,7 @@ export default function Dashboard() {
               statusGroups.map((group, gi) => (
                 <section key={group.key}>
                   <h2 className="font-caveat text-2xl text-gray-700 mb-2">{group.label}</h2>
-                  <div className="flex flex-wrap gap-5 py-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
                     {group.items.map((r, i) => (
                       <PolaroidCard
                         key={r.id}
@@ -412,7 +412,7 @@ export default function Dashboard() {
             ) : (
               /* Vista Recentes — polaroids */
               <section>
-                <div className="flex flex-wrap gap-5 py-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
                   {sortedRecords.map((r, i) => (
                     <PolaroidCard
                       key={r.id}

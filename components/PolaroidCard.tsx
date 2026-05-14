@@ -33,7 +33,7 @@ export default function PolaroidCard({
 
   const inner = (
     <div
-      className="bg-white shadow-xl p-3 pb-8 w-44 cursor-pointer hover:scale-105 transition-transform duration-200 hover:shadow-2xl hover:z-10 relative"
+      className="bg-white shadow-xl p-3 pb-8 w-full cursor-pointer hover:scale-105 transition-transform duration-200 hover:shadow-2xl hover:z-10 relative"
       style={{ transform: `rotate(${rotation}deg)` }}
     >
       <div className="w-full aspect-square bg-gray-100 overflow-hidden mb-3">
