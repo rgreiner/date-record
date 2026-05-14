@@ -5,9 +5,22 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import PolaroidCard from '@/components/PolaroidCard'
+import SortableCard from '@/components/SortableCard'
 import AddCard from '@/components/AddCard'
 import { Toast } from '@/components/Toast'
 import { useDarkMode } from '@/hooks/useDarkMode'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 
 type DateRecord = {
   id: string
@@ -192,7 +205,38 @@ export default function Dashboard() {
 
   const [sortBy, setSortBy] = useState<'recent' | 'ranking' | 'status'>('recent')
   const [matchToast, setMatchToast] = useState('')
+  const [reordering, setReordering] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const { dark, toggle: toggleDark } = useDarkMode()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  )
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string)
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+
+    const oldIndex = sortedRecords.findIndex(r => r.id === active.id)
+    const newIndex = sortedRecords.findIndex(r => r.id === over.id)
+    const newOrder = arrayMove(sortedRecords, oldIndex, newIndex)
+
+    setRecords(prev => {
+      const orderMap = new Map(newOrder.map((r, i) => [r.id, i]))
+      return [...prev].sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+    })
+
+    const supabase = createClient()
+    await Promise.all(
+      newOrder.map((r, i) => supabase.from('dates').update({ position: i }).eq('id', r.id))
+    )
+  }
 
   const scoreMap = useMemo(() => new Map(records.map(r => [r.id, averageScore(r)])), [records])
   const partner = records.find(r => r.status === 'together') ?? null
@@ -338,8 +382,9 @@ export default function Dashboard() {
 
         ) : (
           <>
-            {/* Controles de ordenação */}
-            <div className="flex gap-2">
+            {/* Controles de ordenação + reordenar */}
+            <div className="flex gap-2 items-center justify-between">
+              <div className="flex gap-2">
               {([
                 { key: 'recent',  label: 'Recentes' },
                 { key: 'ranking', label: 'Ranking'  },
@@ -357,6 +402,20 @@ export default function Dashboard() {
                   {opt.label}
                 </button>
               ))}
+              </div>
+
+              {sortBy === 'recent' && (
+                <button
+                  onClick={() => setReordering(r => !r)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    reordering
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-400'
+                  }`}
+                >
+                  {reordering ? '✓ Pronto' : '⠿ Reordenar'}
+                </button>
+              )}
             </div>
 
             {/* Vista por Status — seções agrupadas */}
@@ -419,23 +478,71 @@ export default function Dashboard() {
                 </div>
               </section>
             ) : (
-              /* Vista Recentes — polaroids */
+              /* Vista Recentes — polaroids com drag-and-drop */
               <section>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
-                  {sortedRecords.map((r, i) => (
-                    <PolaroidCard
-                      key={r.id}
-                      name={r.name}
-                      handle={r.instagram_handle ?? ''}
-                      photoUrl={r.photo_url ?? ''}
-                      status={r.status}
-                      score={scoreMap.get(r.id)}
-                      rotation={rotations[i % rotations.length]}
-                      href={`/dates/${r.id}`}
-                    />
-                  ))}
-                  <AddCard rotation={-2} />
-                </div>
+                {reordering ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={sortedRecords.map(r => r.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
+                        {sortedRecords.map((r, i) => (
+                          <SortableCard
+                            key={r.id}
+                            id={r.id}
+                            name={r.name}
+                            handle={r.instagram_handle ?? ''}
+                            photoUrl={r.photo_url ?? ''}
+                            status={r.status}
+                            score={scoreMap.get(r.id)}
+                            rotation={rotations[i % rotations.length]}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                    <DragOverlay>
+                      {activeId && (() => {
+                        const r = sortedRecords.find(r => r.id === activeId)
+                        if (!r) return null
+                        const i = sortedRecords.findIndex(r => r.id === activeId)
+                        return (
+                          <div className="scale-105 opacity-90">
+                            <PolaroidCard
+                              name={r.name}
+                              handle={r.instagram_handle ?? ''}
+                              photoUrl={r.photo_url ?? ''}
+                              status={r.status}
+                              score={scoreMap.get(r.id)}
+                              rotation={rotations[i % rotations.length]}
+                            />
+                          </div>
+                        )
+                      })()}
+                    </DragOverlay>
+                  </DndContext>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
+                    {sortedRecords.map((r, i) => (
+                      <PolaroidCard
+                        key={r.id}
+                        name={r.name}
+                        handle={r.instagram_handle ?? ''}
+                        photoUrl={r.photo_url ?? ''}
+                        status={r.status}
+                        score={scoreMap.get(r.id)}
+                        rotation={rotations[i % rotations.length]}
+                        href={`/dates/${r.id}`}
+                      />
+                    ))}
+                    <AddCard rotation={-2} />
+                  </div>
+                )}
               </section>
             )}
           </>
