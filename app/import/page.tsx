@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
@@ -17,8 +17,9 @@ function supportsContactPicker() {
 export default function ImportPage() {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
+  const hasContacts = supportsContactPicker()
 
-  const [tab, setTab] = useState<'phone' | 'manual'>('phone')
+  const [tab, setTab] = useState<'phone' | 'manual'>(hasContacts ? 'phone' : 'manual')
   const [contacts, setContacts] = useState<ImportContact[]>([])
   const [manualName, setManualName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -102,25 +103,33 @@ export default function ImportPage() {
           <h1 className="font-caveat text-3xl text-gray-800">Importar contatos</h1>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 bg-white rounded-2xl p-1.5 shadow-sm">
-          {([
-            { key: 'phone',  label: '📱 Da agenda' },
-            { key: 'manual', label: '🔍 Busca manual' },
-          ] as const).map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
-                tab === t.key
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {/* Tabs — só mostra agenda se o dispositivo suporta */}
+        {hasContacts && (
+          <div className="flex gap-2 bg-white rounded-2xl p-1.5 shadow-sm">
+            {([
+              { key: 'phone',  label: '📱 Da agenda' },
+              { key: 'manual', label: '🔍 Busca manual' },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  tab === t.key
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!hasContacts && (
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-amber-700">
+            📱 Importação da agenda disponível apenas no Chrome para Android. Use a busca manual abaixo.
+          </div>
+        )}
 
         {/* Conteúdo da tab */}
         {tab === 'phone' ? (
