@@ -21,10 +21,16 @@ const statusConfig: Record<Status, { label: string; color: string }> = {
   together:       { label: '❤️ Juntos',           color: 'bg-red-100 text-red-600' },
 }
 
-function communityBadgeStyle(rating: number): string {
+function ratingBadgeStyle(rating: number): string {
   if (rating >= 4) return 'bg-amber-400 text-amber-950'
-  if (rating >= 3) return 'bg-sky-400 text-white'
+  if (rating >= 2.5) return 'bg-sky-400 text-white'
   return 'bg-gray-400 text-white'
+}
+
+function ratingTextColor(rating: number): string {
+  if (rating >= 4) return 'text-amber-500'
+  if (rating >= 2.5) return 'text-sky-500'
+  return 'text-gray-400'
 }
 
 export default function PolaroidCard({
@@ -61,7 +67,7 @@ export default function PolaroidCard({
           </div>
         )}
         {communityRating !== undefined && (
-          <div className={`absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${communityBadgeStyle(communityRating)}`}>
+          <div className={`absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${ratingBadgeStyle(communityRating)}`}>
             <span>★</span>
             <span>{communityRating}</span>
           </div>
@@ -76,7 +82,7 @@ export default function PolaroidCard({
           {label}
         </span>
         {score !== undefined && (
-          <span className="text-xs text-gray-500 font-medium">{score}/5</span>
+          <span className={`text-xs font-medium ${ratingTextColor(score)}`}>{score}/5</span>
         )}
       </div>
     </div>

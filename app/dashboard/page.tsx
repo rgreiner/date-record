@@ -181,6 +181,12 @@ function recordAverage(r: CommunityScore): number | null {
   return scores.reduce((a, b) => a + b, 0) / scores.length
 }
 
+function ratingTextColor(score: number): string {
+  if (score >= 4) return 'text-amber-500'
+  if (score >= 2.5) return 'text-sky-500'
+  return 'text-gray-400'
+}
+
 function buildCommunityRatings(rows: CommunityScore[]): Map<string, number> {
   const groups = new Map<string, number[]>()
   for (const row of rows) {
@@ -384,7 +390,7 @@ export default function Dashboard() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl px-5 py-4 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 mb-0.5">Melhor conexão</p>
-              <p className="font-caveat text-2xl text-purple-500">{topScore} <span className="text-sm text-gray-400 font-sans">/ 5</span></p>
+              <p className={`font-caveat text-2xl ${ratingTextColor(topScore)}`}>{topScore} <span className="text-sm text-gray-400 font-sans">/ 5</span></p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {records.find(r => scoreMap.get(r.id) === topScore)?.name ?? ''}
               </p>
@@ -510,7 +516,7 @@ export default function Dashboard() {
                         <div className="text-right shrink-0">
                           {scoreMap.get(r.id) !== undefined ? (
                             <>
-                              <p className="font-caveat text-2xl text-purple-500">{scoreMap.get(r.id)}</p>
+                              <p className={`font-caveat text-2xl ${ratingTextColor(scoreMap.get(r.id)!)}`}>{scoreMap.get(r.id)}</p>
                               <p className="text-xs text-gray-400">score</p>
                             </>
                           ) : (
