@@ -13,7 +13,7 @@ type DateRecord = {
   name: string
   instagram_handle: string
   photo_url: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched'
+  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
   score_conversation: number | null
   score_appearance: number | null
   score_chemistry: number | null
