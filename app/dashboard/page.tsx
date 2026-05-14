@@ -165,11 +165,46 @@ function UserPhoto({ src, name }: { src: string; name: string }) {
   )
 }
 
+type CommunityScore = {
+  instagram_handle: string
+  score_conversation: number | null
+  score_appearance: number | null
+  score_chemistry: number | null
+  score_values: number | null
+  score_fun: number | null
+}
+
+function recordAverage(r: CommunityScore): number | null {
+  const scores = [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun]
+    .filter((s): s is number => s !== null)
+  if (scores.length === 0) return null
+  return scores.reduce((a, b) => a + b, 0) / scores.length
+}
+
+function buildCommunityRatings(rows: CommunityScore[]): Map<string, number> {
+  const groups = new Map<string, number[]>()
+  for (const row of rows) {
+    const avg = recordAverage(row)
+    if (avg === null) continue
+    const handle = row.instagram_handle.toLowerCase()
+    const existing = groups.get(handle) ?? []
+    existing.push(avg)
+    groups.set(handle, existing)
+  }
+  const result = new Map<string, number>()
+  for (const [handle, avgs] of groups) {
+    const mean = avgs.reduce((a, b) => a + b, 0) / avgs.length
+    result.set(handle, Math.ceil(mean * 10) / 10)
+  }
+  return result
+}
+
 export default function Dashboard() {
   const router = useRouter()
   const [records, setRecords] = useState<DateRecord[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [communityRatings, setCommunityRatings] = useState<Map<string, number>>(new Map())
 
   useEffect(() => {
     async function load() {
@@ -185,6 +220,15 @@ export default function Dashboard() {
       setProfile(profileData ?? { full_name: user.user_metadata.full_name ?? 'Você', instagram_handle: null, avatar_url: null })
       setRecords(datesData ?? [])
       setLoading(false)
+
+      const handles = (datesData ?? []).map(d => d.instagram_handle).filter(Boolean)
+      if (handles.length > 0) {
+        const { data: communityData } = await supabase
+          .from('dates')
+          .select('instagram_handle, score_conversation, score_appearance, score_chemistry, score_values, score_fun')
+          .in('instagram_handle', handles)
+        if (communityData) setCommunityRatings(buildCommunityRatings(communityData))
+      }
 
       // Notificação de novos matches
       const lastSeen = localStorage.getItem('dr_last_seen') ?? '0'
@@ -432,6 +476,7 @@ export default function Dashboard() {
                         photoUrl={r.photo_url ?? ''}
                         status={r.status}
                         score={scoreMap.get(r.id)}
+                        communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                         rotation={rotations[(gi * 3 + i) % rotations.length]}
                         href={`/dates/${r.id}`}
                       />
@@ -501,6 +546,7 @@ export default function Dashboard() {
                             photoUrl={r.photo_url ?? ''}
                             status={r.status}
                             score={scoreMap.get(r.id)}
+                            communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                             rotation={rotations[i % rotations.length]}
                           />
                         ))}
@@ -519,6 +565,7 @@ export default function Dashboard() {
                               photoUrl={r.photo_url ?? ''}
                               status={r.status}
                               score={scoreMap.get(r.id)}
+                              communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                               rotation={rotations[i % rotations.length]}
                             />
                           </div>
@@ -536,6 +583,7 @@ export default function Dashboard() {
                         photoUrl={r.photo_url ?? ''}
                         status={r.status}
                         score={scoreMap.get(r.id)}
+                        communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                         rotation={rotations[i % rotations.length]}
                         href={`/dates/${r.id}`}
                       />

@@ -11,6 +11,7 @@ type Props = {
   photoUrl: string
   status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
   score?: number
+  communityRating?: number
   rotation?: number
   href?: string
 }

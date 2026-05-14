@@ -7,6 +7,7 @@ type PolaroidCardProps = {
   handle: string
   photoUrl: string
   score?: number
+  communityRating?: number
   status: Status
   rotation?: number
   href?: string
@@ -20,11 +21,18 @@ const statusConfig: Record<Status, { label: string; color: string }> = {
   together:       { label: '❤️ Juntos',           color: 'bg-red-100 text-red-600' },
 }
 
+function communityBadgeStyle(rating: number): string {
+  if (rating >= 4) return 'bg-amber-400 text-amber-950'
+  if (rating >= 3) return 'bg-sky-400 text-white'
+  return 'bg-gray-400 text-white'
+}
+
 export default function PolaroidCard({
   name,
   handle,
   photoUrl,
   score,
+  communityRating,
   status,
   rotation = 0,
   href,
@@ -36,7 +44,7 @@ export default function PolaroidCard({
       className="bg-white shadow-xl p-3 pb-8 w-full cursor-pointer hover:scale-105 transition-transform duration-200 hover:shadow-2xl hover:z-10 relative"
       style={{ transform: `rotate(${rotation}deg)` }}
     >
-      <div className="w-full aspect-square bg-gray-100 overflow-hidden mb-3">
+      <div className="w-full aspect-square bg-gray-100 overflow-hidden mb-3 relative">
         {photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -50,6 +58,12 @@ export default function PolaroidCard({
             <span className="font-caveat text-5xl text-gray-300">
               {name.charAt(0).toUpperCase()}
             </span>
+          </div>
+        )}
+        {communityRating !== undefined && (
+          <div className={`absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${communityBadgeStyle(communityRating)}`}>
+            <span>★</span>
+            <span>{communityRating}</span>
           </div>
         )}
       </div>
