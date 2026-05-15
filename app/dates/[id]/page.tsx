@@ -10,7 +10,7 @@ type DateRecord = {
   name: string
   instagram_handle: string
   photo_url: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
+  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
   date_on: string | null
   notes: string | null
   flags: string[]
@@ -81,6 +81,7 @@ export default function DateDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [inviteLink, setInviteLink] = useState('')
   const [generatingInvite, setGeneratingInvite] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [userId, setUserId] = useState<string>('')
 
   useEffect(() => {
@@ -201,9 +202,14 @@ export default function DateDetail() {
 
   async function handleCopyInvite() {
     await navigator.clipboard.writeText(inviteLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleShareInvite() {
     if (navigator.share) {
       navigator.share({
-        title: 'Date Record',
+        title: 'Melhores Encontros',
         text: `Oi ${record?.name ?? ''}! Quero saber se temos match 💘`,
         url: inviteLink,
       })
@@ -220,7 +226,7 @@ export default function DateDetail() {
 
   if (loading || !record) {
     return (
-      <main className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
+      <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex items-center justify-center">
         <p className="font-caveat text-2xl text-gray-400">Carregando...</p>
       </main>
     )
@@ -229,7 +235,7 @@ export default function DateDetail() {
   const currentPhoto = photoPreview || record.photo_url
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] pb-12">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 pb-12">
       <div className="max-w-sm mx-auto px-6 pt-8 flex flex-col gap-6">
 
         {/* Header */}
@@ -302,10 +308,17 @@ export default function DateDetail() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'interested',     label: 'Tenho interesse' },
+                { value: 'orbit',          label: '🛸 Em órbita' },
+                { value: 'surdina',        label: '🤫 Sigo na surdina' },
                 { value: 'dated',          label: 'Já saímos' },
-                { value: 'not_interested', label: 'Sem interesse' },
+                { value: 'one_night',      label: '🌙 Só uma noite' },
+                { value: 'fwb',            label: '😏 AMB' },
+                { value: 'marry',          label: '💍 É pra casar' },
                 { value: 'matched',        label: '✨ Match!' },
                 { value: 'together',       label: '❤️ Juntos' },
+                { value: 'ghosted_me',     label: '👻 Me ghostaram' },
+                { value: 'ghosted_them',   label: '🫣 Ghostei' },
+                { value: 'not_interested', label: 'Sem interesse' },
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -314,6 +327,8 @@ export default function DateDetail() {
                     record.status === opt.value
                       ? opt.value === 'together'
                         ? 'border-red-400 bg-red-50 text-red-600'
+                        : opt.value === 'matched'
+                        ? 'border-amber-400 bg-amber-50 text-amber-700'
                         : 'border-gray-800 bg-gray-50 text-gray-800'
                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
@@ -325,11 +340,14 @@ export default function DateDetail() {
           </div>
         </div>
 
-        {/* Avaliação — aparece para interested, dated e matched */}
-        {record.status !== 'not_interested' && (
+        {/* Avaliação — oculta só para sem interesse */}
+        {record.status !== 'not_interested' && (() => {
+          const preDate = ['interested', 'orbit', 'surdina']
+          const isPreDate = preDate.includes(record.status)
+          return (
           <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col gap-5">
 
-            {record.status === 'interested' ? (
+            {isPreDate ? (
               <>
                 <div>
                   <h2 className="font-caveat text-xl text-gray-800">Como está indo?</h2>
@@ -351,7 +369,7 @@ export default function DateDetail() {
               </>
             )}
 
-            {(criteriaByStatus[record.status as 'dated' | 'matched' | 'interested'] ?? criteriaByStatus.dated).map(({ key, label, emoji }) => (
+            {(criteriaByStatus[isPreDate ? 'interested' : 'dated']).map(({ key, label, emoji }) => (
               <div key={key} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">{emoji} {label}</span>
                 <StarRating
@@ -366,7 +384,7 @@ export default function DateDetail() {
               <textarea
                 rows={3}
                 placeholder={
-                  record.status === 'interested'
+                  isPreDate
                     ? 'Como está a conversa? Alguma impressão inicial?'
                     : 'Como foi o encontro? O que você sentiu?'
                 }
@@ -385,7 +403,8 @@ export default function DateDetail() {
               />
             </div>
           </div>
-        )}
+          )
+        })()}
 
         {saveError && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
@@ -417,12 +436,26 @@ export default function DateDetail() {
                 <div className="bg-gray-50 rounded-xl px-3 py-2 text-xs text-gray-500 break-all font-mono">
                   {inviteLink}
                 </div>
-                <button
-                  onClick={handleCopyInvite}
-                  className="w-full py-2.5 rounded-xl bg-rose-500 text-white text-sm font-medium hover:bg-rose-600 transition-colors"
-                >
-                  Copiar link / Compartilhar ↗
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCopyInvite}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      copied
+                        ? 'bg-green-500 text-white'
+                        : 'bg-rose-500 text-white hover:bg-rose-600'
+                    }`}
+                  >
+                    {copied ? 'Copiado! ✓' : 'Copiar link'}
+                  </button>
+                  {typeof navigator !== 'undefined' && 'share' in navigator && (
+                    <button
+                      onClick={handleShareInvite}
+                      className="px-4 py-2.5 rounded-xl border-2 border-rose-200 text-rose-500 text-sm font-medium hover:bg-rose-50 transition-colors"
+                    >
+                      ↗
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <button
