@@ -92,7 +92,7 @@ export default function Wrapped() {
     : `${now.getFullYear()}`
 
   async function handleShare() {
-    const text = `Meu Date Record — ${periodLabel}\n\n${title}\n\n📸 ${filtered.length} pessoas\n💘 ${matches.length} matches\n⭐ Score médio: ${avgScore ?? '—'}\n\nwww.daterecord.app`
+    const text = `Meu Melhores Encontros — ${periodLabel}\n\n${title}\n\n📸 ${filtered.length} pessoas\n💘 ${matches.length} matches\n⭐ Score médio: ${avgScore ?? '—'}\n\nwww.daterecord.app`
     if (navigator.share) {
       await navigator.share({ text })
     } else {

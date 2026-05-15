@@ -6,7 +6,7 @@ export default function Home() {
 
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 sticky top-0 z-50 bg-[#faf6f0]/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-amber-100 dark:border-gray-800">
-        <span className="font-caveat text-2xl text-gray-800 dark:text-gray-100">Date Record</span>
+        <span className="font-caveat text-2xl text-gray-800 dark:text-gray-100">Melhores Encontros</span>
         <Link
           href="/login"
           className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"

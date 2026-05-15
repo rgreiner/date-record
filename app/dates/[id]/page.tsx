@@ -203,7 +203,7 @@ export default function DateDetail() {
     await navigator.clipboard.writeText(inviteLink)
     if (navigator.share) {
       navigator.share({
-        title: 'Date Record',
+        title: 'Melhores Encontros',
         text: `Oi ${record?.name ?? ''}! Quero saber se temos match 💘`,
         url: inviteLink,
       })

@@ -15,8 +15,8 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Date Record",
-  description: "Suas memórias afetivas, organizadas",
+  title: "Melhores Encontros",
+  description: "Organize seus dates e descubra sua melhor conexão.",
 };
 
 export default function RootLayout({

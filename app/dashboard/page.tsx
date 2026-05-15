@@ -319,7 +319,7 @@ export default function Dashboard() {
 
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-amber-100 bg-[#faf6f0] dark:bg-gray-950 dark:border-gray-800">
-        <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Date Record</h1>
+        <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Melhores Encontros</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={toggleDark}

@@ -44,7 +44,7 @@ export default function PinGate({ children }: { children: React.ReactNode }) {
     <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-xs flex flex-col items-center gap-8">
         <div className="text-center">
-          <h1 className="font-caveat text-5xl text-gray-800 dark:text-gray-100 mb-2">Date Record</h1>
+          <h1 className="font-caveat text-5xl text-gray-800 dark:text-gray-100 mb-2">Melhores Encontros</h1>
           <p className="text-gray-500 text-sm">Digite seu PIN para entrar</p>
         </div>
 

@@ -40,7 +40,7 @@ export default function ConfirmEmail() {
           </h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-6">
             Enviamos um link de confirmação para o seu e-mail.
-            Clique nele para ativar sua conta e começar a usar o Date Record.
+            Clique nele para ativar sua conta e começar a usar o Melhores Encontros.
           </p>
 
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-sm text-amber-700 text-left mb-6">

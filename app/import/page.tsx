@@ -136,7 +136,7 @@ export default function ImportPage() {
           <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col gap-4">
             <div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Selecione pessoas da sua agenda para adicionar ao Date Record.
+                Selecione pessoas da sua agenda para adicionar ao Melhores Encontros.
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Funciona no Chrome para Android. No iPhone use a busca manual.
