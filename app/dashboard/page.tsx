@@ -27,7 +27,7 @@ type DateRecord = {
   name: string
   instagram_handle: string
   photo_url: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
+  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
   score_conversation: number | null
   score_appearance: number | null
   score_chemistry: number | null
@@ -278,7 +278,7 @@ export default function Dashboard() {
       return [...records].sort((a, b) => (scoreMap.get(b.id) ?? -1) - (scoreMap.get(a.id) ?? -1))
     }
     if (sortBy === 'status') {
-      const order: Record<string, number> = { together: 0, matched: 1, dated: 2, interested: 3, not_interested: 4 }
+      const order: Record<string, number> = { together: 0, matched: 1, marry: 2, dated: 3, one_night: 4, fwb: 5, surdina: 6, orbit: 7, interested: 8, ghosted_me: 9, ghosted_them: 10, not_interested: 11 }
       return [...records].sort((a, b) => order[a.status] - order[b.status])
     }
     return records // já vem por position asc do banco
@@ -287,10 +287,17 @@ export default function Dashboard() {
   const statusGroups = useMemo(() => {
     if (sortBy !== 'status') return null
     const labels: Record<string, string> = {
-      together: '❤️ Juntos',
-      matched: '✨ Match',
-      dated: 'Já saímos',
-      interested: 'Tenho interesse',
+      together:     '❤️ Juntos',
+      matched:      '✨ Match',
+      marry:        '💍 É pra casar',
+      dated:        'Já saímos',
+      one_night:    '🌙 Só uma noite',
+      fwb:          '😏 AMB',
+      surdina:      '🤫 Sigo na surdina',
+      orbit:        '🛸 Em órbita',
+      interested:   'Tenho interesse',
+      ghosted_me:   '👻 Me ghostaram',
+      ghosted_them: '🫣 Ghostei',
       not_interested: 'Sem interesse',
     }
     const groups: { key: string; label: string; items: typeof records }[] = []

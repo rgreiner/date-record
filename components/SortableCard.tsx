@@ -9,7 +9,7 @@ type Props = {
   name: string
   handle: string
   photoUrl: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
+  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
   score?: number
   rotation?: number
   href?: string

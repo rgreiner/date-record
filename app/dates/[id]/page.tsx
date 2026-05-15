@@ -10,7 +10,7 @@ type DateRecord = {
   name: string
   instagram_handle: string
   photo_url: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
+  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
   date_on: string | null
   notes: string | null
   flags: string[]
@@ -302,10 +302,17 @@ export default function DateDetail() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'interested',     label: 'Tenho interesse' },
+                { value: 'orbit',          label: '🛸 Em órbita' },
+                { value: 'surdina',        label: '🤫 Sigo na surdina' },
                 { value: 'dated',          label: 'Já saímos' },
-                { value: 'not_interested', label: 'Sem interesse' },
+                { value: 'one_night',      label: '🌙 Só uma noite' },
+                { value: 'fwb',            label: '😏 AMB' },
+                { value: 'marry',          label: '💍 É pra casar' },
                 { value: 'matched',        label: '✨ Match!' },
                 { value: 'together',       label: '❤️ Juntos' },
+                { value: 'ghosted_me',     label: '👻 Me ghostaram' },
+                { value: 'ghosted_them',   label: '🫣 Ghostei' },
+                { value: 'not_interested', label: 'Sem interesse' },
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -314,6 +321,8 @@ export default function DateDetail() {
                     record.status === opt.value
                       ? opt.value === 'together'
                         ? 'border-red-400 bg-red-50 text-red-600'
+                        : opt.value === 'matched'
+                        ? 'border-amber-400 bg-amber-50 text-amber-700'
                         : 'border-gray-800 bg-gray-50 text-gray-800'
                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
@@ -325,11 +334,14 @@ export default function DateDetail() {
           </div>
         </div>
 
-        {/* Avaliação — aparece para interested, dated e matched */}
-        {record.status !== 'not_interested' && (
+        {/* Avaliação — oculta só para sem interesse */}
+        {record.status !== 'not_interested' && (() => {
+          const preDate = ['interested', 'orbit', 'surdina']
+          const isPreDate = preDate.includes(record.status)
+          return (
           <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col gap-5">
 
-            {record.status === 'interested' ? (
+            {isPreDate ? (
               <>
                 <div>
                   <h2 className="font-caveat text-xl text-gray-800">Como está indo?</h2>
@@ -351,7 +363,7 @@ export default function DateDetail() {
               </>
             )}
 
-            {(criteriaByStatus[record.status as 'dated' | 'matched' | 'interested'] ?? criteriaByStatus.dated).map(({ key, label, emoji }) => (
+            {(criteriaByStatus[isPreDate ? 'interested' : 'dated']).map(({ key, label, emoji }) => (
               <div key={key} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">{emoji} {label}</span>
                 <StarRating
@@ -366,7 +378,7 @@ export default function DateDetail() {
               <textarea
                 rows={3}
                 placeholder={
-                  record.status === 'interested'
+                  isPreDate
                     ? 'Como está a conversa? Alguma impressão inicial?'
                     : 'Como foi o encontro? O que você sentiu?'
                 }
@@ -385,7 +397,8 @@ export default function DateDetail() {
               />
             </div>
           </div>
-        )}
+          )
+        })()}
 
         {saveError && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
