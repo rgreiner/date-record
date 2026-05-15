@@ -43,9 +43,9 @@ export const metadata: Metadata = {
     description: 'Organize seus dates e descubra quem tem mais conexão com você.',
   },
   robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
   },
   alternates: {
     canonical: BASE_URL,
