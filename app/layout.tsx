@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Caveat } from "next/font/google";
 import "./globals.css";
 import PinGate from "@/components/PinGate";
+import InstallPrompt from "@/components/InstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -82,6 +83,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${geistSans.variable} ${caveat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#faf6f0] dark:bg-gray-950 transition-colors">
         <PinGate>{children}</PinGate>
+        <InstallPrompt />
       </body>
     </html>
   );
