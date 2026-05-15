@@ -94,7 +94,7 @@ export default function ImportPage() {
   const selectedCount = contacts.filter(c => c.selected).length
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] pb-12">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 pb-12">
       <div className="max-w-sm mx-auto px-6 pt-8 flex flex-col gap-6">
 
         {/* Header */}
@@ -136,7 +136,7 @@ export default function ImportPage() {
           <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col gap-4">
             <div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Selecione pessoas da sua agenda para adicionar ao Date Record.
+                Selecione pessoas da sua agenda para adicionar ao Melhores Encontros.
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Funciona no Chrome para Android. No iPhone use a busca manual.

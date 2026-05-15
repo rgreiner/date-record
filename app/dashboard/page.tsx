@@ -27,7 +27,7 @@ type DateRecord = {
   name: string
   instagram_handle: string
   photo_url: string
-  status: 'interested' | 'not_interested' | 'dated' | 'matched' | 'together'
+  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
   score_conversation: number | null
   score_appearance: number | null
   score_chemistry: number | null
@@ -165,44 +165,10 @@ function UserPhoto({ src, name }: { src: string; name: string }) {
   )
 }
 
-type CommunityScore = {
-  instagram_handle: string
-  score_conversation: number | null
-  score_appearance: number | null
-  score_chemistry: number | null
-  score_values: number | null
-  score_fun: number | null
-}
-
-function recordAverage(r: CommunityScore): number | null {
-  const scores = [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun]
-    .filter((s): s is number => s !== null)
-  if (scores.length === 0) return null
-  return scores.reduce((a, b) => a + b, 0) / scores.length
-}
-
 function ratingTextColor(score: number): string {
   if (score >= 4) return 'text-amber-500'
   if (score >= 2.5) return 'text-sky-500'
   return 'text-gray-400'
-}
-
-function buildCommunityRatings(rows: CommunityScore[]): Map<string, number> {
-  const groups = new Map<string, number[]>()
-  for (const row of rows) {
-    const avg = recordAverage(row)
-    if (avg === null) continue
-    const handle = row.instagram_handle.toLowerCase()
-    const existing = groups.get(handle) ?? []
-    existing.push(avg)
-    groups.set(handle, existing)
-  }
-  const result = new Map<string, number>()
-  for (const [handle, avgs] of groups) {
-    const mean = avgs.reduce((a, b) => a + b, 0) / avgs.length
-    result.set(handle, Math.ceil(mean * 10) / 10)
-  }
-  return result
 }
 
 export default function Dashboard() {
@@ -210,7 +176,7 @@ export default function Dashboard() {
   const [records, setRecords] = useState<DateRecord[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [communityRatings, setCommunityRatings] = useState<Map<string, number>>(new Map())
+  const [myRating, setMyRating] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     async function load() {
@@ -227,13 +193,24 @@ export default function Dashboard() {
       setRecords(datesData ?? [])
       setLoading(false)
 
-      const handles = (datesData ?? []).map(d => d.instagram_handle).filter(Boolean)
-      if (handles.length > 0) {
-        const { data: communityData } = await supabase
+      const myHandle = profileData?.instagram_handle
+      if (myHandle) {
+        const { data: ratingsData } = await supabase
           .from('dates')
-          .select('instagram_handle, score_conversation, score_appearance, score_chemistry, score_values, score_fun')
-          .in('instagram_handle', handles)
-        if (communityData) setCommunityRatings(buildCommunityRatings(communityData))
+          .select('score_conversation, score_appearance, score_chemistry, score_values, score_fun')
+          .eq('instagram_handle', myHandle)
+          .neq('user_id', user.id)
+        if (ratingsData && ratingsData.length > 0) {
+          const perRecord = ratingsData.map(r => {
+            const scores = [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun]
+              .filter((s): s is number => s !== null)
+            return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null
+          }).filter((n): n is number => n !== null)
+          if (perRecord.length > 0) {
+            const mean = perRecord.reduce((a, b) => a + b, 0) / perRecord.length
+            setMyRating(Math.ceil(mean * 10) / 10)
+          }
+        }
       }
 
       // Notificação de novos matches
@@ -301,7 +278,7 @@ export default function Dashboard() {
       return [...records].sort((a, b) => (scoreMap.get(b.id) ?? -1) - (scoreMap.get(a.id) ?? -1))
     }
     if (sortBy === 'status') {
-      const order: Record<string, number> = { together: 0, matched: 1, dated: 2, interested: 3, not_interested: 4 }
+      const order: Record<string, number> = { together: 0, matched: 1, marry: 2, dated: 3, one_night: 4, fwb: 5, surdina: 6, orbit: 7, interested: 8, ghosted_me: 9, ghosted_them: 10, not_interested: 11 }
       return [...records].sort((a, b) => order[a.status] - order[b.status])
     }
     return records // já vem por position asc do banco
@@ -310,10 +287,17 @@ export default function Dashboard() {
   const statusGroups = useMemo(() => {
     if (sortBy !== 'status') return null
     const labels: Record<string, string> = {
-      together: '❤️ Juntos',
-      matched: '✨ Match',
-      dated: 'Já saímos',
-      interested: 'Tenho interesse',
+      together:     '❤️ Juntos',
+      matched:      '✨ Match',
+      marry:        '💍 É pra casar',
+      dated:        'Já saímos',
+      one_night:    '🌙 Só uma noite',
+      fwb:          '😏 AMB',
+      surdina:      '🤫 Sigo na surdina',
+      orbit:        '🛸 Em órbita',
+      interested:   'Tenho interesse',
+      ghosted_me:   '👻 Me ghostaram',
+      ghosted_them: '🫣 Ghostei',
       not_interested: 'Sem interesse',
     }
     const groups: { key: string; label: string; items: typeof records }[] = []
@@ -330,7 +314,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
+      <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex items-center justify-center">
         <p className="font-caveat text-2xl text-gray-400">Carregando...</p>
       </main>
     )
@@ -342,7 +326,7 @@ export default function Dashboard() {
 
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-amber-100 bg-[#faf6f0] dark:bg-gray-950 dark:border-gray-800">
-        <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Date Record</h1>
+        <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Melhores Encontros</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={toggleDark}
@@ -367,8 +351,16 @@ export default function Dashboard() {
 
         {/* Barra de perfil compacta */}
         <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="shrink-0 w-11 h-11 rounded-full overflow-hidden bg-rose-100 shadow-md ring-2 ring-white dark:ring-gray-900">
-            <UserPhoto src={userPhoto} name={firstName} />
+          <div className="relative shrink-0 w-11 h-11">
+            <div className="w-11 h-11 rounded-full overflow-hidden bg-rose-100 shadow-md ring-2 ring-white dark:ring-gray-900">
+              <UserPhoto src={userPhoto} name={firstName} />
+            </div>
+            {myRating !== undefined && (
+              <div className={`absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${myRating >= 4 ? 'bg-amber-400 text-amber-950' : myRating >= 2.5 ? 'bg-sky-400 text-white' : 'bg-gray-400 text-white'}`}>
+                <span>★</span>
+                <span>{myRating}</span>
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-caveat text-xl text-gray-800 dark:text-gray-100 leading-tight">{firstName}</p>
@@ -482,7 +474,6 @@ export default function Dashboard() {
                         photoUrl={r.photo_url ?? ''}
                         status={r.status}
                         score={scoreMap.get(r.id)}
-                        communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                         rotation={rotations[(gi * 3 + i) % rotations.length]}
                         href={`/dates/${r.id}`}
                       />
@@ -552,8 +543,7 @@ export default function Dashboard() {
                             photoUrl={r.photo_url ?? ''}
                             status={r.status}
                             score={scoreMap.get(r.id)}
-                            communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
-                            rotation={rotations[i % rotations.length]}
+                                rotation={rotations[i % rotations.length]}
                           />
                         ))}
                       </div>
@@ -571,8 +561,7 @@ export default function Dashboard() {
                               photoUrl={r.photo_url ?? ''}
                               status={r.status}
                               score={scoreMap.get(r.id)}
-                              communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
-                              rotation={rotations[i % rotations.length]}
+                                    rotation={rotations[i % rotations.length]}
                             />
                           </div>
                         )
@@ -589,7 +578,6 @@ export default function Dashboard() {
                         photoUrl={r.photo_url ?? ''}
                         status={r.status}
                         score={scoreMap.get(r.id)}
-                        communityRating={communityRatings.get(r.instagram_handle?.toLowerCase() ?? '')}
                         rotation={rotations[i % rotations.length]}
                         href={`/dates/${r.id}`}
                       />

@@ -21,7 +21,7 @@ export default function ConfirmEmail() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf6f0] flex flex-col items-center justify-center p-8">
+    <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
 
         {/* Card principal */}
@@ -40,7 +40,7 @@ export default function ConfirmEmail() {
           </h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-6">
             Enviamos um link de confirmação para o seu e-mail.
-            Clique nele para ativar sua conta e começar a usar o Date Record.
+            Clique nele para ativar sua conta e começar a usar o Melhores Encontros.
           </p>
 
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-sm text-amber-700 text-left mb-6">
