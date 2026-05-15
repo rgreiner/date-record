@@ -29,18 +29,32 @@ export default function Home() {
           Responda 5 perguntas simples sobre cada encontro e veja quem você realmente quer ver de novo.
         </p>
 
-        {/* Fake polaroids — sem pessoas reais */}
+        {/* Fake polaroids — avatares ilustrados, sem pessoas reais */}
         <div className="relative w-full max-w-[320px] h-64 mb-16">
           {/* Card esquerda */}
           <div className="absolute left-0 bottom-0 bg-white dark:bg-gray-800 shadow-xl p-2 pb-7 w-[120px] -rotate-[7deg]">
-            <div className="w-full aspect-square bg-gradient-to-br from-rose-200 to-pink-300 dark:from-rose-700 dark:to-pink-800" />
+            <div className="w-full aspect-square overflow-hidden bg-rose-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.dicebear.com/9.x/lorelei/svg?seed=Gabi&backgroundColor=fecdd3"
+                alt="Avatar ilustrado"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <p className="font-caveat text-sm mt-1.5 text-gray-700 dark:text-gray-300 truncate">Gabi</p>
             <p className="text-xs font-bold text-amber-500">★ 4.8</p>
           </div>
 
           {/* Card centro — destaque */}
           <div className="absolute left-1/2 -translate-x-1/2 top-0 z-10 bg-white dark:bg-gray-800 shadow-2xl p-2 pb-8 w-[148px] rotate-[1deg]">
-            <div className="w-full aspect-square bg-gradient-to-br from-purple-200 to-violet-300 dark:from-purple-700 dark:to-violet-800" />
+            <div className="w-full aspect-square overflow-hidden bg-purple-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.dicebear.com/9.x/lorelei/svg?seed=Luna&backgroundColor=e9d5ff"
+                alt="Avatar ilustrado"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <p className="font-caveat text-base mt-1.5 text-gray-700 dark:text-gray-300 truncate">Luna</p>
             <div className="flex items-center justify-between mt-0.5">
               <p className="text-xs font-bold text-sky-500">★ 3.6</p>
@@ -50,7 +64,14 @@ export default function Home() {
 
           {/* Card direita */}
           <div className="absolute right-0 bottom-0 bg-white dark:bg-gray-800 shadow-xl p-2 pb-7 w-[120px] rotate-[6deg]">
-            <div className="w-full aspect-square bg-gradient-to-br from-sky-200 to-blue-300 dark:from-sky-700 dark:to-blue-800" />
+            <div className="w-full aspect-square overflow-hidden bg-sky-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.dicebear.com/9.x/lorelei/svg?seed=Felipe&backgroundColor=bae6fd"
+                alt="Avatar ilustrado"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <p className="font-caveat text-sm mt-1.5 text-gray-700 dark:text-gray-300 truncate">Felipe</p>
             <p className="text-xs font-bold text-sky-500">★ 3.2</p>
           </div>
