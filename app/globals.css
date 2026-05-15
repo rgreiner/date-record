@@ -18,6 +18,26 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Safe area para iPhone notch e home indicator */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Evita zoom em inputs no iOS */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Remove highlight azul ao tocar em elementos no mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scroll suave no iOS */
+* {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Dark mode global ─────────────────────────────────── */

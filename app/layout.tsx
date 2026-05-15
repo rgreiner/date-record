@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Caveat } from "next/font/google";
 import "./globals.css";
@@ -16,6 +16,18 @@ const caveat = Caveat({
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://melhoresencontros.vercel.app'
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf6f0' },
+    { media: '(prefers-color-scheme: dark)',  color: '#030712' },
+  ],
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
@@ -29,6 +41,15 @@ export const metadata: Metadata = {
     'namoro', 'encontros', 'match', 'conexão',
   ],
   authors: [{ name: 'Melhores Encontros' }],
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Encontros',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: 'Melhores Encontros',
     description: 'Organize seus dates e descubra quem tem mais conexão com você.',
@@ -43,9 +64,9 @@ export const metadata: Metadata = {
     description: 'Organize seus dates e descubra quem tem mais conexão com você.',
   },
   robots: {
-    index: false,
-    follow: false,
-    googleBot: { index: false, follow: false },
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
   },
   alternates: {
     canonical: BASE_URL,

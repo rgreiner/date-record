@@ -422,7 +422,7 @@ export default function DateDetail() {
         </button>
 
         {/* Convite para match */}
-        {record.status !== 'not_interested' && record.status !== 'matched' && (
+        {!['not_interested', 'matched', 'together', 'ghosted_me', 'ghosted_them'].includes(record.status) && (
           <div className="bg-white rounded-3xl shadow-sm p-5 flex flex-col gap-3">
             <div>
               <p className="font-caveat text-xl text-gray-800">Enviar convite de match 💘</p>
