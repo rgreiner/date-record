@@ -1,7 +1,34 @@
 import Link from 'next/link'
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Melhores Encontros',
+  description: 'Organize seus dates, avalie cada encontro e descubra quem tem mais conexão com você. Simples, privado e gratuito.',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  inLanguage: 'pt-BR',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'BRL',
+  },
+  featureList: [
+    'Registro de encontros com foto automática via Instagram',
+    'Avaliação por 5 critérios: conversa, aparência, química, valores e diversão',
+    'Sistema de match mútuo',
+    'Dashboard com ranking e histórico',
+    'Dados 100% privados',
+  ],
+}
+
 export default function Home() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 overflow-x-hidden">
 
       {/* Header */}
@@ -241,5 +268,6 @@ export default function Home() {
       </section>
 
     </main>
+    </>
   )
 }
