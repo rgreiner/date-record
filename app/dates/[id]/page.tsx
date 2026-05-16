@@ -82,6 +82,8 @@ export default function DateDetail() {
   const [inviteLink, setInviteLink] = useState('')
   const [generatingInvite, setGeneratingInvite] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [mentionShown, setMentionShown] = useState(false)
+  const [mentionCopied, setMentionCopied] = useState(false)
   const [userId, setUserId] = useState<string>('')
 
   useEffect(() => {
@@ -204,6 +206,29 @@ export default function DateDetail() {
     await navigator.clipboard.writeText(inviteLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function getMentionToken() {
+    if (!record) return ''
+    const json = JSON.stringify({ h: record.instagram_handle, n: record.name })
+    const b64 = btoa(encodeURIComponent(json))
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  }
+
+  function getMentionMessage() {
+    const firstName = record?.name?.split(' ')[0] ?? ''
+    const link = `${window.location.origin}/mencionado/${getMentionToken()}`
+    return `Ei ${firstName}! 👀 Seu @ apareceu no Melhores Encontros.\n\nParece que alguém registrou um encontro contigo por lá.\n\nEntra para ver 👉 ${link}`
+  }
+
+  async function handleCopyMention() {
+    await navigator.clipboard.writeText(getMentionMessage())
+    setMentionCopied(true)
+    setTimeout(() => setMentionCopied(false), 2000)
+  }
+
+  async function handleShareMention() {
+    if (navigator.share) navigator.share({ text: getMentionMessage() })
   }
 
   async function handleShareInvite() {
@@ -465,6 +490,55 @@ export default function DateDetail() {
               >
                 {generatingInvite ? 'Gerando...' : 'Gerar link de convite'}
               </button>
+            )}
+          </div>
+        )}
+
+        {/* Avisar sobre menção */}
+        {record.instagram_handle && record.status !== 'not_interested' && (
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-5 flex flex-col gap-3">
+            <div>
+              <p className="font-caveat text-xl text-gray-800 dark:text-gray-100">
+                Avisar {record.name.split(' ')[0]} que está no app 👀
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Manda uma mensagem pronta pelo WhatsApp ou Instagram DM. Sem revelar que foi você.
+              </p>
+            </div>
+
+            {!mentionShown ? (
+              <button
+                onClick={() => setMentionShown(true)}
+                className="w-full py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Gerar mensagem →
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-3 text-xs text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                  {getMentionMessage()}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCopyMention}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      mentionCopied
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90'
+                    }`}
+                  >
+                    {mentionCopied ? 'Copiado! ✓' : 'Copiar mensagem'}
+                  </button>
+                  {typeof navigator !== 'undefined' && 'share' in navigator && (
+                    <button
+                      onClick={handleShareMention}
+                      className="px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      ↗
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}
