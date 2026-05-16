@@ -165,6 +165,45 @@ function UserPhoto({ src, name }: { src: string; name: string }) {
   )
 }
 
+function EncouragementCard({ count }: { count: number }) {
+  const tips = [
+    {
+      when: count === 1,
+      emoji: '🌱',
+      title: 'Ótimo começo!',
+      text: 'Adicione mais pessoas para começar a ver padrões e descobrir quem tem mais conexão com você.',
+    },
+    {
+      when: count === 2,
+      emoji: '📸',
+      title: 'Já são dois!',
+      text: 'Continue registrando seus encontros. Com pelo menos 5 você já consegue ver tendências interessantes.',
+    },
+    {
+      when: count === 3 || count === 4,
+      emoji: '🔥',
+      title: 'Você está indo bem!',
+      text: 'Quase lá — com mais alguns registros o ranking começa a fazer sentido de verdade.',
+    },
+  ]
+  const tip = tips.find(t => t.when)
+  if (!tip) return null
+
+  return (
+    <div className="bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/30 dark:to-amber-950/30 rounded-3xl p-5 flex flex-col items-center text-center gap-2 mt-2">
+      <span className="text-3xl">{tip.emoji}</span>
+      <p className="font-caveat text-xl text-gray-800 dark:text-gray-100">{tip.title}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs">{tip.text}</p>
+      <Link
+        href="/add"
+        className="mt-1 text-sm font-medium text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 transition-colors"
+      >
+        + Adicionar mais →
+      </Link>
+    </div>
+  )
+}
+
 function ratingTextColor(score: number): string {
   if (score >= 4) return 'text-amber-500'
   if (score >= 2.5) return 'text-sky-500'
@@ -234,7 +273,19 @@ export default function Dashboard() {
   const [matchToast, setMatchToast] = useState('')
   const [reordering, setReordering] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(['not_interested', 'ghosted_them', 'ghosted_me'])
+  )
   const { dark, toggle: toggleDark } = useDarkMode()
+
+  function toggleGroup(key: string) {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -460,27 +511,43 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Vista por Status — seções agrupadas */}
+            {/* Vista por Status — seções agrupadas e colapsáveis */}
             {sortBy === 'status' && statusGroups ? (
-              statusGroups.map((group, gi) => (
-                <section key={group.key}>
-                  <h2 className="font-caveat text-2xl text-gray-700 mb-2">{group.label}</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
-                    {group.items.map((r, i) => (
-                      <PolaroidCard
-                        key={r.id}
-                        name={r.name}
-                        handle={r.instagram_handle ?? ''}
-                        photoUrl={r.photo_url ?? ''}
-                        status={r.status}
-                        score={scoreMap.get(r.id)}
-                        rotation={rotations[(gi * 3 + i) % rotations.length]}
-                        href={`/dates/${r.id}`}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))
+              statusGroups.map((group, gi) => {
+                const isCollapsed = collapsedGroups.has(group.key)
+                return (
+                  <section key={group.key}>
+                    <button
+                      onClick={() => toggleGroup(group.key)}
+                      className="w-full flex items-center justify-between mb-2 group"
+                    >
+                      <h2 className="font-caveat text-2xl text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
+                        {group.label}
+                        <span className="font-sans text-sm text-gray-400 ml-2">({group.items.length})</span>
+                      </h2>
+                      <span className={`text-gray-400 text-sm transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
+                        ▾
+                      </span>
+                    </button>
+                    {!isCollapsed && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-2">
+                        {group.items.map((r, i) => (
+                          <PolaroidCard
+                            key={r.id}
+                            name={r.name}
+                            handle={r.instagram_handle ?? ''}
+                            photoUrl={r.photo_url ?? ''}
+                            status={r.status}
+                            score={scoreMap.get(r.id)}
+                            rotation={rotations[(gi * 3 + i) % rotations.length]}
+                            href={`/dates/${r.id}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )
+              })
             ) : sortBy === 'ranking' ? (
               /* Vista Ranking — lista com posição */
               <section>
@@ -585,6 +652,9 @@ export default function Dashboard() {
                     <AddCard rotation={-2} />
                   </div>
                 )}
+
+                {/* Encorajamento para poucos dates */}
+                {records.length < 5 && <EncouragementCard count={records.length} />}
               </section>
             )}
           </>
