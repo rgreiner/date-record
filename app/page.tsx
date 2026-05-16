@@ -178,6 +178,43 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Vibe Check */}
+      <section className="px-6 pb-14">
+        <div className="max-w-md mx-auto">
+          <div className="bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/30 dark:to-amber-950/20 rounded-3xl p-7 border border-rose-100 dark:border-rose-900/40">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">⚡</span>
+              <p className="font-caveat text-2xl text-gray-800 dark:text-gray-100">Vibe Check</p>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-5">
+              Quer saber se tem conexão de verdade? Manda um <strong>Vibe Check</strong> para a pessoa — ela responde 5 perguntas anônimas, e o resultado só aparece se for mútuo.
+            </p>
+
+            {/* Fluxo visual */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl p-3 text-center">
+                <p className="text-xl mb-1">😊</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Você envia</p>
+              </div>
+              <span className="text-gray-300 dark:text-gray-600 text-lg">→</span>
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl p-3 text-center">
+                <p className="text-xl mb-1">🤔</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ela responde</p>
+              </div>
+              <span className="text-gray-300 dark:text-gray-600 text-lg">→</span>
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl p-3 text-center border border-rose-100 dark:border-rose-900/50">
+                <p className="text-xl mb-1">💘</p>
+                <p className="text-xs font-semibold text-rose-500">Match!</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">
+              Sem resultado = sem constrangimento. Só aparece se for dos dois lados. 🤐
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Bloco de pontuação — mini preview */}
       <section className="px-6 pb-14">
         <div className="max-w-md mx-auto bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-6">

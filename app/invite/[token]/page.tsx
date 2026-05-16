@@ -14,11 +14,11 @@ type InviteData = {
 }
 
 const questions = [
-  { key: 'q1', emoji: '✨', question: 'Você sentiu atração?' },
-  { key: 'q2', emoji: '💬', question: 'Como foi a conversa?' },
-  { key: 'q3', emoji: '🔥', question: 'Sentiu química?' },
-  { key: 'q4', emoji: '🎯', question: 'A vibe estava boa?' },
-  { key: 'q5', emoji: '📅', question: 'Gostaria de se encontrar de novo?' },
+  { key: 'q1', emoji: '⚡', question: 'Sentiu atração na hora?' },
+  { key: 'q2', emoji: '💬', question: 'A conversa fluiu?' },
+  { key: 'q3', emoji: '🔥', question: 'Teve química?' },
+  { key: 'q4', emoji: '😄', question: 'Se divertiu junto?' },
+  { key: 'q5', emoji: '🔁', question: 'Gostaria de se encontrar de novo?' },
 ]
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -179,7 +179,10 @@ export default function InvitePage() {
 
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-4">
-          <span className="font-caveat text-xl text-gray-400">Melhores Encontros</span>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">⚡</span>
+            <span className="font-caveat text-2xl text-gray-700 dark:text-gray-200">Vibe Check</span>
+          </div>
 
           <div className="bg-white dark:bg-gray-800 shadow-xl p-3 pb-9 w-36 -rotate-[1deg]">
             {senderPhoto ? (
@@ -198,10 +201,10 @@ export default function InvitePage() {
 
           <div>
             <p className="font-caveat text-2xl text-gray-800 dark:text-gray-100">
-              {senderName} quer saber se vocês têm match 💘
+              Qual foi a vibe entre vocês? 💫
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              Responda honestamente — só você dois vão saber o resultado.
+              5 perguntas · resultado secreto · só aparece se for mútuo 🤐
             </p>
           </div>
         </div>
@@ -229,11 +232,11 @@ export default function InvitePage() {
           disabled={!allAnswered || saving}
           className="w-full py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold text-base hover:opacity-90 transition-opacity disabled:opacity-40 shadow-lg"
         >
-          {saving ? 'Enviando...' : allAnswered ? 'Enviar avaliação 💘' : `Responda todas as ${questions.length} perguntas`}
+          {saving ? 'Revelando resultado...' : allAnswered ? 'Revelar resultado 🔮' : `Responda as ${questions.length} perguntas`}
         </button>
 
         <p className="text-xs text-gray-400 text-center pb-2">
-          Suas respostas são privadas. Só haverá resultado se for match mútuo.
+          Suas respostas são anônimas. O resultado só aparece se a conexão for mútua. 🤐
         </p>
 
       </div>

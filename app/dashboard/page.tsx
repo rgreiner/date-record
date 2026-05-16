@@ -252,6 +252,17 @@ export default function Dashboard() {
         }
       }
 
+      // Lembrete de avaliação pendente
+      const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000
+      const silenced = ['not_interested', 'ghosted_me', 'ghosted_them', 'one_night', 'fwb']
+      const unrated = (datesData ?? []).find(r =>
+        !silenced.includes(r.status) &&
+        !hasScores(r) &&
+        new Date(r.created_at).getTime() < twoDaysAgo &&
+        localStorage.getItem(`dr_remind_${r.id}`) !== 'ok'
+      )
+      if (unrated) setRateReminder(unrated)
+
       // Notificação de novos matches
       const lastSeen = localStorage.getItem('dr_last_seen') ?? '0'
       const newMatches = (datesData ?? []).filter(
@@ -269,6 +280,7 @@ export default function Dashboard() {
     load()
   }, [router])
 
+  const [rateReminder, setRateReminder] = useState<DateRecord | null>(null)
   const [sortBy, setSortBy] = useState<'recent' | 'ranking' | 'status'>('recent')
   const [matchToast, setMatchToast] = useState('')
   const [reordering, setReordering] = useState(false)
@@ -423,6 +435,37 @@ export default function Dashboard() {
             <span className="text-purple-400">⭐ <span className="font-medium">{topScore ?? '—'}</span></span>
           </div>
         </Link>
+
+        {/* Lembrete de avaliação pendente */}
+        {rateReminder && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300 truncate">
+                Como foi com {rateReminder.name}? 📝
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
+                Ainda sem avaliação — registra enquanto está fresco.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={`/dates/${rateReminder.id}`}
+                className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-900 transition-colors"
+              >
+                Avaliar →
+              </Link>
+              <button
+                onClick={() => {
+                  localStorage.setItem(`dr_remind_${rateReminder.id}`, 'ok')
+                  setRateReminder(null)
+                }}
+                className="text-amber-300 hover:text-amber-500 dark:text-amber-700 dark:hover:text-amber-500 text-xl leading-none transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Hero — relacionamento, match ou estado neutro */}
         {partner ? (

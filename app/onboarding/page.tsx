@@ -14,7 +14,11 @@ export default function Onboarding() {
     interested_in: '',
     instagram_handle: '',
   })
-  const [handles, setHandles] = useState(['', '', ''])
+  const [firstDates, setFirstDates] = useState([
+    { name: '', handle: '' },
+    { name: '', handle: '' },
+    { name: '', handle: '' },
+  ])
   const [loading, setLoading] = useState(false)
 
   async function handleFinish() {
@@ -35,26 +39,24 @@ export default function Onboarding() {
       instagram_handle: form.instagram_handle.replace('@', ''),
     })
 
-    const validHandles = handles
-      .map(h => h.replace('@', '').trim())
-      .filter(h => h.length > 0)
+    const validDates = firstDates
+      .filter(d => d.name.trim().length > 0 || d.handle.trim().length > 0)
+      .map(d => ({
+        user_id: user.id,
+        name: d.name.trim() || d.handle.replace('@', '').trim(),
+        instagram_handle: d.handle.replace('@', '').trim(),
+        status: 'interested' as const,
+      }))
 
-    if (validHandles.length > 0) {
-      await supabase.from('dates').insert(
-        validHandles.map(handle => ({
-          user_id: user.id,
-          name: handle,
-          instagram_handle: handle,
-          status: 'interested',
-        }))
-      )
+    if (validDates.length > 0) {
+      await supabase.from('dates').insert(validDates)
     }
 
     router.push('/dashboard')
   }
 
-  function updateHandle(index: number, value: string) {
-    setHandles(prev => prev.map((h, i) => i === index ? value : h))
+  function updateFirstDate(index: number, field: 'name' | 'handle', value: string) {
+    setFirstDates(prev => prev.map((d, i) => i === index ? { ...d, [field]: value } : d))
   }
 
   const LAST_STEP = steps.length - 1
@@ -144,24 +146,31 @@ export default function Onboarding() {
 
           {/* Step 3 — Primeiros dates */}
           {step === 3 && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <p className="text-sm text-gray-500">
-                Adicione o @ de até 3 pessoas com quem saiu ou tem interesse. Você pode avaliar depois.
+                Adicione até 3 pessoas com quem saiu ou tem interesse. Pode avaliar depois.
               </p>
-              {handles.map((h, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-gray-300 font-caveat text-xl w-4">{i + 1}.</span>
+              {firstDates.map((d, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <span className="text-xs font-medium text-gray-400">Pessoa {i + 1}</span>
                   <input
                     type="text"
-                    placeholder={`@instagram${i + 1}`}
-                    value={h}
-                    onChange={e => updateHandle(i, e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 outline-none focus:border-gray-400 transition-colors"
+                    placeholder="Nome"
+                    value={d.name}
+                    onChange={e => updateFirstDate(i, 'name', e.target.value)}
+                    className="border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 outline-none focus:border-gray-400 transition-colors text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="@instagram (opcional)"
+                    value={d.handle}
+                    onChange={e => updateFirstDate(i, 'handle', e.target.value)}
+                    className="border border-gray-200 rounded-xl px-4 py-2.5 text-gray-800 outline-none focus:border-gray-400 transition-colors text-sm"
                   />
                 </div>
               ))}
               <p className="text-xs text-gray-400 text-center">
-                Pode pular se preferir adicionar depois
+                Pode pular — você adiciona depois no dashboard
               </p>
             </div>
           )}
