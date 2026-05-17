@@ -4,22 +4,15 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { SCORE_KEYS } from '@/lib/scores'
+import type { DateRecord } from '@/lib/types'
 
-type DateRecord = {
-  name: string
-  status: string
-  flags: string[]
-  score_conversation: number | null
-  score_appearance: number | null
-  score_chemistry: number | null
-  score_values: number | null
-  score_fun: number | null
-}
+type InsightRecord = Pick<DateRecord, 'name' | 'status' | 'flags' | typeof SCORE_KEYS[number]>
 
 function avg(scores: (number | null)[]): number | null {
   const valid = scores.filter((s): s is number => s !== null)
   if (!valid.length) return null
-  return Math.round(valid.reduce((a, b) => a + b) / valid.length * 10) / 10
+  return Math.round(valid.reduce((a, b) => a + b, 0) / valid.length * 10) / 10
 }
 
 function Bar({ value, max = 5, color = 'bg-purple-400' }: { value: number; max?: number; color?: string }) {
@@ -38,7 +31,7 @@ function Bar({ value, max = 5, color = 'bg-purple-400' }: { value: number; max?:
 
 export default function Insights() {
   const router = useRouter()
-  const [records, setRecords] = useState<DateRecord[]>([])
+  const [records, setRecords] = useState<InsightRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,7 +47,7 @@ export default function Insights() {
   }, [router])
 
   const scored = records.filter(r =>
-    [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun].some(s => s !== null)
+    SCORE_KEYS.some(k => r[k] !== null)
   )
 
   const criteriaAvgs = [
@@ -63,36 +56,31 @@ export default function Insights() {
     { label: 'Química',   emoji: '🔥', val: avg(scored.map(r => r.score_chemistry)) },
     { label: 'Valores',   emoji: '🤝', val: avg(scored.map(r => r.score_values)) },
     { label: 'Diversão',  emoji: '😄', val: avg(scored.map(r => r.score_fun)) },
-  ].filter(c => c.val !== null) as { label: string; emoji: string; val: number }[]
+  ].filter((c): c is { label: string; emoji: string; val: number } => c.val !== null)
 
   const statusCounts = {
-    matched:      records.filter(r => r.status === 'matched').length,
-    dated:        records.filter(r => r.status === 'dated').length,
-    interested:   records.filter(r => r.status === 'interested').length,
+    matched:        records.filter(r => r.status === 'matched').length,
+    dated:          records.filter(r => r.status === 'dated').length,
+    interested:     records.filter(r => r.status === 'interested').length,
     not_interested: records.filter(r => r.status === 'not_interested').length,
   }
 
+  const datedOrMatched = statusCounts.dated + statusCounts.matched
   const conversionRate = records.length > 0
-    ? Math.round(((statusCounts.dated + statusCounts.matched) / records.length) * 100)
+    ? Math.round((datedOrMatched / records.length) * 100)
     : 0
-
-  const matchRate = (statusCounts.dated + statusCounts.matched) > 0
-    ? Math.round((statusCounts.matched / (statusCounts.dated + statusCounts.matched)) * 100)
+  const matchRate = datedOrMatched > 0
+    ? Math.round((statusCounts.matched / datedOrMatched) * 100)
     : 0
 
   const allFlags = records.flatMap(r => r.flags ?? [])
   const flagCounts: Record<string, number> = {}
   allFlags.forEach(f => { flagCounts[f] = (flagCounts[f] ?? 0) + 1 })
-  const topRedFlags = Object.entries(flagCounts).filter(([k]) => k.startsWith('🚩')).sort((a,b) => b[1]-a[1]).slice(0, 3)
-  const topGreenFlags = Object.entries(flagCounts).filter(([k]) => k.startsWith('💚')).sort((a,b) => b[1]-a[1]).slice(0, 3)
+  const topRedFlags = Object.entries(flagCounts).filter(([k]) => k.startsWith('🚩')).sort((a, b) => b[1] - a[1]).slice(0, 3)
+  const topGreenFlags = Object.entries(flagCounts).filter(([k]) => k.startsWith('💚')).sort((a, b) => b[1] - a[1]).slice(0, 3)
 
-  const topCriteria = criteriaAvgs.length > 0
-    ? criteriaAvgs.reduce((a, b) => a.val > b.val ? a : b)
-    : null
-
-  const weakCriteria = criteriaAvgs.length > 0
-    ? criteriaAvgs.reduce((a, b) => a.val < b.val ? a : b)
-    : null
+  const topCriteria = criteriaAvgs.length > 0 ? criteriaAvgs.reduce((a, b) => a.val > b.val ? a : b) : null
+  const weakCriteria = criteriaAvgs.length > 0 ? criteriaAvgs.reduce((a, b) => a.val < b.val ? a : b) : null
 
   if (loading) return (
     <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 flex items-center justify-center">
@@ -120,10 +108,10 @@ export default function Insights() {
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-6 flex flex-col gap-4">
               <h2 className="font-caveat text-xl text-gray-800 dark:text-gray-100">Funil de relacionamentos</h2>
               {[
-                { label: 'Total de pessoas',  value: records.length,              color: 'bg-gray-400', max: records.length },
-                { label: 'Interesse',         value: statusCounts.interested,     color: 'bg-blue-400', max: records.length },
-                { label: 'Saíram juntos',     value: statusCounts.dated + statusCounts.matched, color: 'bg-rose-400', max: records.length },
-                { label: 'Matches',           value: statusCounts.matched,        color: 'bg-amber-400', max: records.length },
+                { label: 'Total de pessoas', value: records.length,     color: 'bg-gray-400',  max: records.length },
+                { label: 'Interesse',        value: statusCounts.interested, color: 'bg-blue-400', max: records.length },
+                { label: 'Saíram juntos',    value: datedOrMatched,     color: 'bg-rose-400',  max: records.length },
+                { label: 'Matches',          value: statusCounts.matched,    color: 'bg-amber-400', max: records.length },
               ].map(s => (
                 <div key={s.label} className="flex flex-col gap-1">
                   <div className="flex justify-between text-xs text-gray-500">
@@ -149,16 +137,14 @@ export default function Insights() {
             {criteriaAvgs.length > 0 && (
               <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm p-6 flex flex-col gap-4">
                 <h2 className="font-caveat text-xl text-gray-800 dark:text-gray-100">O que você valoriza mais</h2>
-                {criteriaAvgs
-                  .sort((a, b) => b.val - a.val)
-                  .map(c => (
-                    <div key={c.label} className="flex flex-col gap-1">
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{c.emoji} {c.label}</span>
-                      </div>
-                      <Bar value={c.val} color="bg-purple-400" />
+                {[...criteriaAvgs].sort((a, b) => b.val - a.val).map(c => (
+                  <div key={c.label} className="flex flex-col gap-1">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{c.emoji} {c.label}</span>
                     </div>
-                  ))}
+                    <Bar value={c.val} color="bg-purple-400" />
+                  </div>
+                ))}
 
                 {topCriteria && weakCriteria && topCriteria.label !== weakCriteria.label && (
                   <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-3 text-sm text-purple-700 dark:text-purple-300">

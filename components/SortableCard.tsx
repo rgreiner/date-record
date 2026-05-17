@@ -3,13 +3,14 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import PolaroidCard from './PolaroidCard'
+import type { Status } from '@/lib/types'
 
 type Props = {
   id: string
   name: string
   handle: string
   photoUrl: string
-  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
+  status: Status
   score?: number
   rotation?: number
   href?: string

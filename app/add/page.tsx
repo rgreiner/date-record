@@ -17,6 +17,7 @@ export default function AddDate() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [photoFailed, setPhotoFailed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [step, setStep] = useState<'handle' | 'details'>('handle')
 
   function handleLookup() {
@@ -31,15 +32,15 @@ export default function AddDate() {
     const file = e.target.files?.[0]
     if (!file) return
     if (photoPreview && !photoUrl) URL.revokeObjectURL(photoPreview)
-    const url = URL.createObjectURL(file)
     setPhotoFile(file)
-    setPhotoPreview(url)
+    setPhotoPreview(URL.createObjectURL(file))
     setPhotoUrl('')
     setPhotoFailed(false)
   }
 
   async function handleSave() {
     setLoading(true)
+    setSaveError('')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
@@ -53,19 +54,29 @@ export default function AddDate() {
         .from('photos')
         .upload(path, photoFile, { upsert: true })
 
-      if (!uploadError) {
-        const { data } = supabase.storage.from('photos').getPublicUrl(path)
-        photo_url = data.publicUrl
+      if (uploadError) {
+        setSaveError(`Erro no upload da foto: ${uploadError.message}`)
+        setLoading(false)
+        return
       }
+
+      const { data } = supabase.storage.from('photos').getPublicUrl(path)
+      photo_url = data.publicUrl
     }
 
-    await supabase.from('dates').insert({
+    const { error: dbError } = await supabase.from('dates').insert({
       user_id: user.id,
       name: name || resolvedHandle,
       instagram_handle: resolvedHandle,
       photo_url,
       status,
     })
+
+    if (dbError) {
+      setSaveError(`Erro ao salvar: ${dbError.message}`)
+      setLoading(false)
+      return
+    }
 
     router.push('/dashboard')
   }
@@ -113,7 +124,6 @@ export default function AddDate() {
         {step === 'details' && (
           <div className="flex flex-col gap-4">
 
-            {/* Polaroid preview com upload */}
             <div className="flex justify-center">
               <div
                 className="bg-white shadow-xl p-3 pb-8 w-40 rotate-[-2deg] cursor-pointer group"
@@ -218,6 +228,12 @@ export default function AddDate() {
                   ))}
                 </div>
               </div>
+
+              {saveError && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+                  {saveError}
+                </div>
+              )}
 
               <button
                 onClick={handleSave}

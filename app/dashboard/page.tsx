@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { averageScore, hasScores, ratingTextColor, ratingBadgeClass } from '@/lib/scores'
+import type { DateRecord, Profile } from '@/lib/types'
 import PolaroidCard from '@/components/PolaroidCard'
 import SortableCard from '@/components/SortableCard'
 import AddCard from '@/components/AddCard'
@@ -22,58 +24,16 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 
-type DateRecord = {
-  id: string
-  name: string
-  instagram_handle: string
-  photo_url: string
-  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
-  score_conversation: number | null
-  score_appearance: number | null
-  score_chemistry: number | null
-  score_values: number | null
-  score_fun: number | null
-  created_at: string
-}
-
-type Profile = {
-  full_name: string
-  instagram_handle: string | null
-  avatar_url: string | null
-}
-
-function averageScore(record: DateRecord): number | undefined {
-  const scores = [
-    record.score_conversation,
-    record.score_appearance,
-    record.score_chemistry,
-    record.score_values,
-    record.score_fun,
-  ].filter((s): s is number => s !== null)
-  if (scores.length === 0) return undefined
-  return Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
-}
-
-function hasScores(r: DateRecord) {
-  return [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun]
-    .some(s => s !== null)
-}
-
 const rotations = [-3, 2, -1, 4, -2, 3, -4, 1]
 
 function TogetherCard({ partner, userPhoto, userName }: { partner: DateRecord; userPhoto: string; userName: string }) {
   return (
     <Link href={`/dates/${partner.id}`} className="block">
       <div className="bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border border-red-100 rounded-3xl p-6 hover:shadow-lg transition-shadow overflow-hidden relative">
-
-        {/* Texto decorativo de fundo */}
         <p className="absolute top-3 right-4 font-caveat text-7xl text-red-100 select-none leading-none">❤</p>
-
         <p className="text-xs font-semibold text-red-400 tracking-widest uppercase mb-5">
           ❤️ Em relacionamento
         </p>
-
-        {/* Dois polaroids lado a lado */}
         <div className="flex justify-center items-end gap-4">
           <div className="bg-white shadow-xl p-2.5 pb-7 w-[42%] rotate-[-5deg] hover:rotate-[-3deg] transition-transform">
             {userPhoto ? (
@@ -85,7 +45,6 @@ function TogetherCard({ partner, userPhoto, userName }: { partner: DateRecord; u
             )}
             <p className="font-caveat text-base text-gray-700 mt-2 truncate">{userName}</p>
           </div>
-
           <div className="bg-white shadow-xl p-2.5 pb-7 w-[42%] rotate-[5deg] hover:rotate-[3deg] transition-transform">
             {partner.photo_url ? (
               <img src={partner.photo_url} alt={partner.name} className="w-full aspect-square object-cover" />
@@ -97,7 +56,6 @@ function TogetherCard({ partner, userPhoto, userName }: { partner: DateRecord; u
             <p className="font-caveat text-base text-gray-700 mt-2 truncate">{partner.name}</p>
           </div>
         </div>
-
         <p className="text-xs text-red-300 text-center mt-5">Toque para ver detalhes →</p>
       </div>
     </Link>
@@ -111,8 +69,6 @@ function MatchCard({ matches }: { matches: DateRecord[] }) {
         <p className="text-xs font-medium text-rose-400 mb-3">
           💘 {matches.length === 1 ? 'Você tem um match!' : `Você tem ${matches.length} matches!`}
         </p>
-
-        {/* Fotos dos matches */}
         <div className="flex gap-2 mb-3">
           {matches.slice(0, 3).map((m, i) => (
             <div
@@ -121,11 +77,7 @@ function MatchCard({ matches }: { matches: DateRecord[] }) {
               style={{ transform: `rotate(${[-3, 2, -1][i]}deg)` }}
             >
               {m.photo_url ? (
-                <img
-                  src={m.photo_url}
-                  alt={m.name}
-                  className="w-full aspect-square object-cover"
-                />
+                <img src={m.photo_url} alt={m.name} className="w-full aspect-square object-cover" />
               ) : (
                 <div className="w-full aspect-square bg-rose-100 flex items-center justify-center">
                   <span className="font-caveat text-3xl text-rose-300">
@@ -137,7 +89,6 @@ function MatchCard({ matches }: { matches: DateRecord[] }) {
             </div>
           ))}
         </div>
-
         <p className="text-xs text-rose-400">Ver {matches.length === 1 ? 'detalhes' : 'todos'} →</p>
       </div>
     </Link>
@@ -204,18 +155,21 @@ function EncouragementCard({ count }: { count: number }) {
   )
 }
 
-function ratingTextColor(score: number): string {
-  if (score >= 4) return 'text-amber-500'
-  if (score >= 2.5) return 'text-sky-500'
-  return 'text-gray-400'
-}
-
 export default function Dashboard() {
   const router = useRouter()
   const [records, setRecords] = useState<DateRecord[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [myRating, setMyRating] = useState<number | undefined>(undefined)
+  const [rateReminder, setRateReminder] = useState<DateRecord | null>(null)
+  const [sortBy, setSortBy] = useState<'recent' | 'ranking' | 'status'>('recent')
+  const [matchToast, setMatchToast] = useState('')
+  const [reordering, setReordering] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(['not_interested', 'ghosted_them', 'ghosted_me'])
+  )
+  const { dark, toggle: toggleDark } = useDarkMode()
 
   useEffect(() => {
     async function load() {
@@ -240,11 +194,9 @@ export default function Dashboard() {
           .eq('instagram_handle', myHandle)
           .neq('user_id', user.id)
         if (ratingsData && ratingsData.length > 0) {
-          const perRecord = ratingsData.map(r => {
-            const scores = [r.score_conversation, r.score_appearance, r.score_chemistry, r.score_values, r.score_fun]
-              .filter((s): s is number => s !== null)
-            return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null
-          }).filter((n): n is number => n !== null)
+          const perRecord = ratingsData
+            .map(r => averageScore(r))
+            .filter((n): n is number => n !== undefined)
           if (perRecord.length > 0) {
             const mean = perRecord.reduce((a, b) => a + b, 0) / perRecord.length
             setMyRating(Math.ceil(mean * 10) / 10)
@@ -252,7 +204,6 @@ export default function Dashboard() {
         }
       }
 
-      // Lembrete de avaliação pendente
       const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000
       const silenced = ['not_interested', 'ghosted_me', 'ghosted_them', 'one_night', 'fwb']
       const unrated = (datesData ?? []).find(r =>
@@ -263,7 +214,6 @@ export default function Dashboard() {
       )
       if (unrated) setRateReminder(unrated)
 
-      // Notificação de novos matches
       const lastSeen = localStorage.getItem('dr_last_seen') ?? '0'
       const newMatches = (datesData ?? []).filter(
         r => r.status === 'matched' && new Date(r.created_at).getTime() > parseInt(lastSeen)
@@ -279,16 +229,6 @@ export default function Dashboard() {
     }
     load()
   }, [router])
-
-  const [rateReminder, setRateReminder] = useState<DateRecord | null>(null)
-  const [sortBy, setSortBy] = useState<'recent' | 'ranking' | 'status'>('recent')
-  const [matchToast, setMatchToast] = useState('')
-  const [reordering, setReordering] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    () => new Set(['not_interested', 'ghosted_them', 'ghosted_me'])
-  )
-  const { dark, toggle: toggleDark } = useDarkMode()
 
   function toggleGroup(key: string) {
     setCollapsedGroups(prev => {
@@ -308,14 +248,35 @@ export default function Dashboard() {
     setActiveId(event.active.id as string)
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
+  const scoreMap = useMemo(() => new Map(records.map(r => [r.id, averageScore(r)])), [records])
+
+  const sortedRecords = useMemo(() => {
+    if (sortBy === 'ranking') {
+      return [...records].sort((a, b) => (scoreMap.get(b.id) ?? -1) - (scoreMap.get(a.id) ?? -1))
+    }
+    if (sortBy === 'status') {
+      const order: Record<string, number> = {
+        together: 0, matched: 1, marry: 2, dated: 3, one_night: 4, fwb: 5,
+        surdina: 6, orbit: 7, interested: 8, ghosted_me: 9, ghosted_them: 10, not_interested: 11,
+      }
+      return [...records].sort((a, b) => (order[a.status] ?? 99) - (order[b.status] ?? 99))
+    }
+    return records
+  }, [records, sortBy, scoreMap])
+
+  // useRef so handleDragEnd always sees the current sortedRecords without being a dependency
+  const sortedRecordsRef = useRef(sortedRecords)
+  sortedRecordsRef.current = sortedRecords
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveId(null)
     if (!over || active.id === over.id) return
 
-    const oldIndex = sortedRecords.findIndex(r => r.id === active.id)
-    const newIndex = sortedRecords.findIndex(r => r.id === over.id)
-    const newOrder = arrayMove(sortedRecords, oldIndex, newIndex)
+    const current = sortedRecordsRef.current
+    const oldIndex = current.findIndex(r => r.id === active.id)
+    const newIndex = current.findIndex(r => r.id === over.id)
+    const newOrder = arrayMove(current, oldIndex, newIndex)
 
     setRecords(prev => {
       const orderMap = new Map(newOrder.map((r, i) => [r.id, i]))
@@ -326,9 +287,8 @@ export default function Dashboard() {
     await Promise.all(
       newOrder.map((r, i) => supabase.from('dates').update({ position: i }).eq('id', r.id))
     )
-  }
+  }, [])
 
-  const scoreMap = useMemo(() => new Map(records.map(r => [r.id, averageScore(r)])), [records])
   const partner = records.find(r => r.status === 'together') ?? null
   const totalMatches = records.filter(r => r.status === 'matched').length
   const topScore = useMemo(() => {
@@ -336,31 +296,20 @@ export default function Dashboard() {
     return scores.length > 0 ? Math.max(...scores) : null
   }, [scoreMap])
 
-  const sortedRecords = useMemo(() => {
-    if (sortBy === 'ranking') {
-      return [...records].sort((a, b) => (scoreMap.get(b.id) ?? -1) - (scoreMap.get(a.id) ?? -1))
-    }
-    if (sortBy === 'status') {
-      const order: Record<string, number> = { together: 0, matched: 1, marry: 2, dated: 3, one_night: 4, fwb: 5, surdina: 6, orbit: 7, interested: 8, ghosted_me: 9, ghosted_them: 10, not_interested: 11 }
-      return [...records].sort((a, b) => order[a.status] - order[b.status])
-    }
-    return records // já vem por position asc do banco
-  }, [records, sortBy, scoreMap])
-
   const statusGroups = useMemo(() => {
     if (sortBy !== 'status') return null
     const labels: Record<string, string> = {
-      together:     '❤️ Juntos',
-      matched:      '✨ Match',
-      marry:        '💍 É pra casar',
-      dated:        'Já saímos',
-      one_night:    '🌙 Só uma noite',
-      fwb:          '😏 AMB',
-      surdina:      '🤫 Sigo na surdina',
-      orbit:        '🛸 Em órbita',
-      interested:   'Tenho interesse',
-      ghosted_me:   '👻 Me ghostaram',
-      ghosted_them: '🫣 Ghostei',
+      together:       '❤️ Juntos',
+      matched:        '✨ Match',
+      marry:          '💍 É pra casar',
+      dated:          'Já saímos',
+      one_night:      '🌙 Só uma noite',
+      fwb:            '😏 AMB',
+      surdina:        '🤫 Sigo na surdina',
+      orbit:          '🛸 Em órbita',
+      interested:     'Tenho interesse',
+      ghosted_me:     '👻 Me ghostaram',
+      ghosted_them:   '🫣 Ghostei',
       not_interested: 'Sem interesse',
     }
     const groups: { key: string; label: string; items: typeof records }[] = []
@@ -387,7 +336,6 @@ export default function Dashboard() {
     <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950">
       {matchToast && <Toast message={matchToast} onClose={() => setMatchToast('')} />}
 
-      {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-amber-100 bg-[#faf6f0] dark:bg-gray-950 dark:border-gray-800">
         <h1 className="font-caveat text-3xl text-gray-800 dark:text-gray-100">Melhores Encontros</h1>
         <div className="flex items-center gap-3">
@@ -412,14 +360,13 @@ export default function Dashboard() {
 
       <div className="max-w-2xl mx-auto px-6 py-6 flex flex-col gap-6">
 
-        {/* Barra de perfil compacta */}
         <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="relative shrink-0 w-11 h-11">
             <div className="w-11 h-11 rounded-full overflow-hidden bg-rose-100 shadow-md ring-2 ring-white dark:ring-gray-900">
               <UserPhoto src={userPhoto} name={firstName} />
             </div>
             {myRating !== undefined && (
-              <div className={`absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${myRating >= 4 ? 'bg-amber-400 text-amber-950' : myRating >= 2.5 ? 'bg-sky-400 text-white' : 'bg-gray-400 text-white'}`}>
+              <div className={`absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow ${ratingBadgeClass(myRating)}`}>
                 <span>★</span>
                 <span>{myRating}</span>
               </div>
@@ -436,7 +383,6 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        {/* Lembrete de avaliação pendente */}
         {rateReminder && (
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -467,7 +413,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Hero — relacionamento, match ou estado neutro */}
         {partner ? (
           <TogetherCard partner={partner} userPhoto={userPhoto} userName={firstName} />
         ) : totalMatches > 0 ? (
@@ -486,8 +431,6 @@ export default function Dashboard() {
         ) : null}
 
         {records.length === 0 ? (
-
-          /* Estado vazio */
           <div className="flex flex-col items-center text-center gap-6">
             <div>
               <h2 className="font-caveat text-3xl text-gray-800 mb-2">Comece agora!</h2>
@@ -515,29 +458,27 @@ export default function Dashboard() {
               <span className="text-xl leading-none">+</span> Adicionar primeira pessoa
             </Link>
           </div>
-
         ) : (
           <>
-            {/* Controles de ordenação + reordenar */}
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-2">
-              {([
-                { key: 'recent',  label: 'Recentes' },
-                { key: 'ranking', label: 'Ranking'  },
-                { key: 'status',  label: 'Status'   },
-              ] as const).map(opt => (
-                <button
-                  key={opt.key}
-                  onClick={() => setSortBy(opt.key)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    sortBy === opt.key
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-white text-gray-500 hover:bg-gray-100 shadow-sm'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+                {([
+                  { key: 'recent',  label: 'Recentes' },
+                  { key: 'ranking', label: 'Ranking'  },
+                  { key: 'status',  label: 'Status'   },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setSortBy(opt.key)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      sortBy === opt.key
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-white text-gray-500 hover:bg-gray-100 shadow-sm'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
 
               {sortBy === 'recent' && (
@@ -554,7 +495,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Vista por Status — seções agrupadas e colapsáveis */}
             {sortBy === 'status' && statusGroups ? (
               statusGroups.map((group, gi) => {
                 const isCollapsed = collapsedGroups.has(group.key)
@@ -592,7 +532,6 @@ export default function Dashboard() {
                 )
               })
             ) : sortBy === 'ranking' ? (
-              /* Vista Ranking — lista com posição */
               <section>
                 <div className="flex flex-col gap-3">
                   {sortedRecords.map((r, i) => (
@@ -630,7 +569,6 @@ export default function Dashboard() {
                 </div>
               </section>
             ) : (
-              /* Vista Recentes — polaroids com drag-and-drop */
               <section>
                 {reordering ? (
                   <DndContext
@@ -653,7 +591,7 @@ export default function Dashboard() {
                             photoUrl={r.photo_url ?? ''}
                             status={r.status}
                             score={scoreMap.get(r.id)}
-                                rotation={rotations[i % rotations.length]}
+                            rotation={rotations[i % rotations.length]}
                           />
                         ))}
                       </div>
@@ -671,7 +609,7 @@ export default function Dashboard() {
                               photoUrl={r.photo_url ?? ''}
                               status={r.status}
                               score={scoreMap.get(r.id)}
-                                    rotation={rotations[i % rotations.length]}
+                              rotation={rotations[i % rotations.length]}
                             />
                           </div>
                         )
@@ -696,7 +634,6 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {/* Encorajamento para poucos dates */}
                 {records.length < 5 && <EncouragementCard count={records.length} />}
               </section>
             )}

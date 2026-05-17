@@ -3,49 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { SCORE_CRITERIA } from '@/lib/scores'
+import type { DateRecord, ScoreKey } from '@/lib/types'
 import FlagPicker from '@/components/FlagPicker'
-
-type DateRecord = {
-  id: string
-  name: string
-  instagram_handle: string
-  photo_url: string
-  status: 'dated' | 'interested' | 'not_interested' | 'matched' | 'together' | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
-  date_on: string | null
-  notes: string | null
-  flags: string[]
-  score_conversation: number | null
-  score_appearance: number | null
-  score_chemistry: number | null
-  score_values: number | null
-  score_fun: number | null
-}
-
-type CriteriaKey = 'score_conversation' | 'score_appearance' | 'score_chemistry' | 'score_values' | 'score_fun'
-
-const criteriaByStatus: Record<'dated' | 'matched' | 'interested', { key: CriteriaKey; label: string; emoji: string }[]> = {
-  dated: [
-    { key: 'score_conversation', label: 'Conversa',   emoji: '💬' },
-    { key: 'score_appearance',   label: 'Aparência',  emoji: '✨' },
-    { key: 'score_chemistry',    label: 'Química',    emoji: '🔥' },
-    { key: 'score_values',       label: 'Valores',    emoji: '🤝' },
-    { key: 'score_fun',          label: 'Diversão',   emoji: '😄' },
-  ],
-  matched: [
-    { key: 'score_conversation', label: 'Conversa',   emoji: '💬' },
-    { key: 'score_appearance',   label: 'Aparência',  emoji: '✨' },
-    { key: 'score_chemistry',    label: 'Química',    emoji: '🔥' },
-    { key: 'score_values',       label: 'Valores',    emoji: '🤝' },
-    { key: 'score_fun',          label: 'Diversão',   emoji: '😄' },
-  ],
-  interested: [
-    { key: 'score_appearance',   label: 'Atração pelo perfil',   emoji: '✨' },
-    { key: 'score_conversation', label: 'Conversa online',       emoji: '💬' },
-    { key: 'score_chemistry',    label: 'Interesse recíproco',   emoji: '🔁' },
-    { key: 'score_values',       label: 'Vibe geral',            emoji: '🎯' },
-    { key: 'score_fun',          label: 'Intenção de sair',      emoji: '📅' },
-  ],
-}
 
 function StarRating({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState<number | null>(null)
@@ -67,6 +27,9 @@ function StarRating({ value, onChange }: { value: number | null; onChange: (v: n
   )
 }
 
+const PRE_DATE_STATUSES = new Set(['interested', 'orbit', 'surdina'])
+const INVITE_EXCLUDED_STATUSES = new Set(['not_interested', 'matched', 'together', 'ghosted_me', 'ghosted_them'])
+
 export default function DateDetail() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
@@ -77,6 +40,7 @@ export default function DateDetail() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [inviteLink, setInviteLink] = useState('')
@@ -105,16 +69,13 @@ export default function DateDetail() {
     const file = e.target.files?.[0]
     if (!file) return
     if (photoPreview) URL.revokeObjectURL(photoPreview)
-    const url = URL.createObjectURL(file)
     setPhotoFile(file)
-    setPhotoPreview(url)
+    setPhotoPreview(URL.createObjectURL(file))
   }
 
   function updateField<K extends keyof DateRecord>(key: K, value: DateRecord[K]) {
     setRecord(r => r ? { ...r, [key]: value } : r)
   }
-
-  const [saveError, setSaveError] = useState('')
 
   async function handleSave() {
     if (!record) return
@@ -178,14 +139,8 @@ export default function DateDetail() {
       .is('responded_at', null)
       .single()
 
-    const token = existing?.token ?? (() => {
-      // Token será gerado pelo banco via default
-      return null
-    })()
-
-    if (token) {
-      const link = `${window.location.origin}/invite/${token}`
-      setInviteLink(link)
+    if (existing?.token) {
+      setInviteLink(`${window.location.origin}/invite/${existing.token}`)
       setGeneratingInvite(false)
       return
     }
@@ -211,8 +166,7 @@ export default function DateDetail() {
   function getMentionToken() {
     if (!record) return ''
     const json = JSON.stringify({ h: record.instagram_handle, n: record.name })
-    const b64 = btoa(encodeURIComponent(json))
-    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    return btoa(encodeURIComponent(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
   }
 
   function getMentionMessage() {
@@ -258,12 +212,13 @@ export default function DateDetail() {
   }
 
   const currentPhoto = photoPreview || record.photo_url
+  const isPreDate = PRE_DATE_STATUSES.has(record.status)
+  const criteria = SCORE_CRITERIA[isPreDate ? 'interested' : 'dated']
 
   return (
     <main className="min-h-screen bg-[#faf6f0] dark:bg-gray-950 pb-12">
       <div className="max-w-sm mx-auto px-6 pt-8 flex flex-col gap-6">
 
-        {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-xl">←</button>
           <h1 className="font-caveat text-3xl text-gray-800">Editar</h1>
@@ -366,19 +321,13 @@ export default function DateDetail() {
         </div>
 
         {/* Avaliação — oculta só para sem interesse */}
-        {record.status !== 'not_interested' && (() => {
-          const preDate = ['interested', 'orbit', 'surdina']
-          const isPreDate = preDate.includes(record.status)
-          return (
+        {record.status !== 'not_interested' && (
           <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col gap-5">
-
             {isPreDate ? (
-              <>
-                <div>
-                  <h2 className="font-caveat text-xl text-gray-800">Como está indo?</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Avalie o interesse antes do encontro acontecer</p>
-                </div>
-              </>
+              <div>
+                <h2 className="font-caveat text-xl text-gray-800">Como está indo?</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Avalie o interesse antes do encontro acontecer</p>
+              </div>
             ) : (
               <>
                 <h2 className="font-caveat text-xl text-gray-800">Avaliação do encontro</h2>
@@ -394,12 +343,12 @@ export default function DateDetail() {
               </>
             )}
 
-            {(criteriaByStatus[isPreDate ? 'interested' : 'dated']).map(({ key, label, emoji }) => (
+            {criteria.map(({ key, label, emoji }) => (
               <div key={key} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">{emoji} {label}</span>
                 <StarRating
-                  value={record[key]}
-                  onChange={v => updateField(key, v)}
+                  value={record[key as ScoreKey]}
+                  onChange={v => updateField(key as ScoreKey, v)}
                 />
               </div>
             ))}
@@ -419,7 +368,6 @@ export default function DateDetail() {
               />
             </div>
 
-            {/* Flags */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-700">Flags</label>
               <FlagPicker
@@ -428,8 +376,7 @@ export default function DateDetail() {
               />
             </div>
           </div>
-          )
-        })()}
+        )}
 
         {saveError && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
@@ -437,7 +384,6 @@ export default function DateDetail() {
           </div>
         )}
 
-        {/* Salvar */}
         <button
           onClick={handleSave}
           disabled={saving}
@@ -447,7 +393,7 @@ export default function DateDetail() {
         </button>
 
         {/* Convite para match */}
-        {!['not_interested', 'matched', 'together', 'ghosted_me', 'ghosted_them'].includes(record.status) && (
+        {!INVITE_EXCLUDED_STATUSES.has(record.status) && (
           <div className="bg-white rounded-3xl shadow-sm p-5 flex flex-col gap-3">
             <div>
               <p className="font-caveat text-xl text-gray-800">Enviar convite de match 💘</p>
@@ -465,9 +411,7 @@ export default function DateDetail() {
                   <button
                     onClick={handleCopyInvite}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                      copied
-                        ? 'bg-green-500 text-white'
-                        : 'bg-rose-500 text-white hover:bg-rose-600'
+                      copied ? 'bg-green-500 text-white' : 'bg-rose-500 text-white hover:bg-rose-600'
                     }`}
                   >
                     {copied ? 'Copiado! ✓' : 'Copiar link'}
@@ -548,9 +492,7 @@ export default function DateDetail() {
           onClick={handleDelete}
           disabled={deleting}
           className={`w-full py-3 rounded-2xl text-sm font-medium transition-colors ${
-            confirmDelete
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'text-red-400 hover:text-red-600'
+            confirmDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'text-red-400 hover:text-red-600'
           }`}
         >
           {deleting ? 'Removendo...' : confirmDelete ? 'Confirmar exclusão' : 'Remover registro'}

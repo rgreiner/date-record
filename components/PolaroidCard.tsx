@@ -1,8 +1,6 @@
 import Link from 'next/link'
-
-type Status =
-  | 'dated' | 'interested' | 'not_interested' | 'matched' | 'together'
-  | 'one_night' | 'marry' | 'surdina' | 'orbit' | 'ghosted_them' | 'ghosted_me' | 'fwb'
+import { ratingTextColor } from '@/lib/scores'
+import type { Status } from '@/lib/types'
 
 type PolaroidCardProps = {
   name: string
@@ -15,24 +13,18 @@ type PolaroidCardProps = {
 }
 
 const statusConfig: Record<Status, { label: string; color: string }> = {
-  interested:     { label: 'Tenho interesse',  color: 'bg-rose-100 text-rose-700' },
-  dated:          { label: 'Já saímos',        color: 'bg-purple-100 text-purple-700' },
-  not_interested: { label: 'Sem interesse',    color: 'bg-gray-100 text-gray-500' },
-  matched:        { label: '✨ Match!',         color: 'bg-amber-100 text-amber-700' },
-  together:       { label: '❤️ Juntos',        color: 'bg-red-100 text-red-600' },
-  one_night:      { label: '🌙 Só uma noite',  color: 'bg-orange-100 text-orange-600' },
-  marry:          { label: '💍 É pra casar',   color: 'bg-yellow-100 text-yellow-700' },
+  interested:     { label: 'Tenho interesse',    color: 'bg-rose-100 text-rose-700' },
+  dated:          { label: 'Já saímos',          color: 'bg-purple-100 text-purple-700' },
+  not_interested: { label: 'Sem interesse',      color: 'bg-gray-100 text-gray-500' },
+  matched:        { label: '✨ Match!',           color: 'bg-amber-100 text-amber-700' },
+  together:       { label: '❤️ Juntos',          color: 'bg-red-100 text-red-600' },
+  one_night:      { label: '🌙 Só uma noite',    color: 'bg-orange-100 text-orange-600' },
+  marry:          { label: '💍 É pra casar',     color: 'bg-yellow-100 text-yellow-700' },
   surdina:        { label: '🤫 Sigo na surdina', color: 'bg-indigo-100 text-indigo-600' },
-  orbit:          { label: '🛸 Em órbita',     color: 'bg-blue-100 text-blue-600' },
-  ghosted_them:   { label: '🫣 Ghostei',       color: 'bg-zinc-100 text-zinc-500' },
-  ghosted_me:     { label: '👻 Me ghostaram',  color: 'bg-zinc-100 text-zinc-400' },
-  fwb:            { label: '😏 AMB',           color: 'bg-teal-100 text-teal-600' },
-}
-
-function ratingTextColor(rating: number): string {
-  if (rating >= 4) return 'text-amber-500'
-  if (rating >= 2.5) return 'text-sky-500'
-  return 'text-gray-400'
+  orbit:          { label: '🛸 Em órbita',       color: 'bg-blue-100 text-blue-600' },
+  ghosted_them:   { label: '🫣 Ghostei',         color: 'bg-zinc-100 text-zinc-500' },
+  ghosted_me:     { label: '👻 Me ghostaram',    color: 'bg-zinc-100 text-zinc-400' },
+  fwb:            { label: '😏 AMB',             color: 'bg-teal-100 text-teal-600' },
 }
 
 export default function PolaroidCard({
